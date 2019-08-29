@@ -1,0 +1,113 @@
+nav .navbar-brand
+{
+    /* size for brand */
+    font-size: xx-large;
+}
+
+/* colors for brand */
+nav .navbar-brand .blue
+{
+    color: #537fbe;
+}
+nav .navbar-brand .red
+{
+    color: #ea433b;
+}
+nav .navbar-brand .yellow
+{
+    color: #f5b82e;
+}
+nav .navbar-brand .green
+{
+    color: #2e944b;
+}
+
+main .form-control
+{
+    /* center form controls */
+    display: inline-block;
+
+    /* override Bootstrap's 100% width for form controls */
+    width: auto;
+}
+
+main
+{
+    /* scroll horizontally as needed */
+    overflow-x: auto;
+
+    /* center contents */
+    text-align: center;
+}
+
+main img
+{
+    /* constrain images on small screens */
+    max-width: 100%;
+}
+
+.instruction {
+    display: none;
+}
+
+.bottom_tr {
+    display: none;
+}
+
+/*Password confirmation validation style for registration*/
+
+#reg_form label,
+#login_form label,
+#quote_form label {
+    display: block;
+    color: red;
+    font-size: 13px;
+}
+
+.available {
+    color: green;
+    font-size: 13px;
+}
+
+.notAvailable {
+    color: red;
+    font-size: 13px;
+}
+
+/*Responsive Portfolio Table*/
+
+@media (max-width: 800px){
+    thead {
+        display: none;
+    }
+
+    tr {
+        border-bottom: 20px solid #FFFFFF;
+    }
+
+    td {
+        display: block;
+        widows: 100%;
+        text-align: left;
+    }
+
+    .instruction {
+        float: left;
+        display: block;
+    }
+
+    .to_be_hidden {
+        display: none;
+    }
+
+    .bottom_tr {
+        display: block;
+    }
+}
+
+
+@media (max-width: 460px){
+    .p-5 {
+        padding: 10px !important;
+    }
+}
