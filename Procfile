@@ -1,1 +1,1 @@
-web: gunicorn application:finance-stocks
+web: gunicorn application:app
