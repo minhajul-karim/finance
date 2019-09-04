@@ -36,8 +36,8 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Configure CS50 Library to use SQLite database
-# db = SQL("sqlite:///finance.db")
-db = SQL("postgres://faoqgogsskzcek:795a7c81e2e6c3cdc7634e7e71a2c39acc0238ceae5efa9644c76ab0b257f97c@ec2-174-129-227-146.compute-1.amazonaws.com:5432/ddf9frqo66ole3")
+db = SQL("sqlite:///finance.db")
+# db = SQL("postgres://faoqgogsskzcek:795a7c81e2e6c3cdc7634e7e71a2c39acc0238ceae5efa9644c76ab0b257f97c@ec2-174-129-227-146.compute-1.amazonaws.com:5432/ddf9frqo66ole3")
 
 # Make sure API key is set
 if not os.environ.get("API_KEY"):
@@ -346,16 +346,23 @@ def register():
         users = db.execute("SELECT id FROM users where username = :username LIMIT 1",
                             username=request.form.get("username"))
 
+        db.execute("INSERT INTO users (username, hash) VALUES (:username, :hash)",
+                   username=request.form.get("username"), hash=generate_password_hash(request.form.get("password")))
+
         # If users is empty
         if users:
             return apology("Username not available!", 400)
 
         # Insert data into database
-        new_user = db.execute("INSERT INTO users (username, hash) VALUES (:username, :hash)",
-              username=request.form.get("username"), hash=generate_password_hash(request.form.get("password")))
+        db.execute("INSERT INTO users (username, hash) VALUES (:username, :hash)",
+                              username=request.form.get("username"), hash=generate_password_hash(request.form.get("password")))
+        
+        # Find the new user's id
+        new_user = db.execute("SELECT id FROM users where username = :username LIMIT 1",
+                              username=request.form.get("username"))
 
         # Save user id to the sesssion
-        session["user_id"] = new_user
+        session["user_id"] = new_user[0]["id"]
 
         # Save username to the sesssion
         session["username"] = request.form.get("username")
@@ -365,6 +372,7 @@ def register():
 
         # Redirect user to home page
         return redirect(url_for("index"))
+
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
