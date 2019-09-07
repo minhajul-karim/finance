@@ -7,8 +7,12 @@ from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 
 from helpers import apology, login_required, lookup, usd
+
+database_file = "postgres://faoqgogsskzcek:795a7c81e2e6c3cdc7634e7e71a2c39acc0238ceae5efa9644c76ab0b257f97c@ec2-174-129-227-146.compute-1.amazonaws.com:5432/ddf9frqo66ole3"
 
 # Configure application
 app = Flask(__name__)
@@ -16,6 +20,12 @@ app.secret_key = "�#�-ާg'���3RCw"
 
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.config["SQLALCHEMY_DATABASE_URI"] = database_file
+
+db = SQLAlchemy(app)
+
+engine = db.engine
+connection = engine.connect()
 
 # Ensure responses aren't cached
 @app.after_request
@@ -35,33 +45,80 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-# Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///finance.db")
-# db = SQL("postgres://faoqgogsskzcek:795a7c81e2e6c3cdc7634e7e71a2c39acc0238ceae5efa9644c76ab0b257f97c@ec2-174-129-227-146.compute-1.amazonaws.com:5432/ddf9frqo66ole3")
 
 # Make sure API key is set
 if not os.environ.get("API_KEY"):
     raise RuntimeError("API_KEY not set")
 
 
+# @app.route("/")
+# @login_required
+# def index():
+#     """Show portfolio of stocks"""
+
+#     # Fetch data form db
+#     rows = db.execute("SELECT * FROM transactions WHERE userid = :userid ORDER BY symbol", userid=session["user_id"])
+#     grand_total = 0
+
+#     # Travarse all rows for logged in user
+#     if rows:
+#         for row in rows:
+
+#             # Get the symbol from db
+#             symbol = row["symbol"]
+
+#             # Get information for symbol
+#             info = lookup(symbol)
+
+#             # If information is received
+#             if info:
+
+#                 # Total value of each holding
+#                 per_stock_total = row["shares"] * info["price"]
+
+#                 # Calculate total spent money
+#                 grand_total += per_stock_total
+
+#                 # Insert required indices into row to display in template
+#                 row["name"] = info["name"]
+#                 row["price"] = info["price"]
+#                 row["total"] = per_stock_total
+
+#     # Check user's available balance
+#     cash_row = db.execute("SELECT cash FROM users WHERE id = :id", id=session["user_id"])
+#     current_cash = cash_row[0]["cash"]
+#     grand_total += current_cash
+
+#     # Render index template
+#     return render_template("index.html", rows=rows, current_cash=current_cash, grand_total=grand_total)
+
 @app.route("/")
 @login_required
 def index():
     """Show portfolio of stocks"""
 
-    # Fetch data form db
-    rows = db.execute("SELECT * FROM transactions WHERE userid = :userid ORDER BY symbol", userid=session["user_id"])
+    # Query to select all data from users table
+    query = text("SELECT * FROM transactions WHERE userid = :userid ORDER BY symbol") 
+
+    # Fetch all rows obtained from the above query
+    rows = (connection.execute(query, userid=session["user_id"])).fetchall()
     grand_total = 0
+
+    # Declare an empty list
+    row_list = []
 
     # Travarse all rows for logged in user
     if rows:
+        
+        # Convert Resultproxy objetcs into list of dictionaries
         for row in rows:
+            row_list.append(dict(row))
 
-            # Get the symbol from db
-            symbol = row["symbol"]
-
+        # Add additional information to row_list
+        for row in row_list:
+            
             # Get information for symbol
-            info = lookup(symbol)
+            info = lookup(row["symbol"])
 
             # If information is received
             if info:
@@ -76,14 +133,17 @@ def index():
                 row["name"] = info["name"]
                 row["price"] = info["price"]
                 row["total"] = per_stock_total
+                # return "additional data inserted"
 
     # Check user's available balance
-    cash_row = db.execute("SELECT cash FROM users WHERE id = :id", id=session["user_id"])
-    current_cash = cash_row[0]["cash"]
+    query = text("SELECT cash FROM users WHERE id = :id")
+    result = (connection.execute(query, id=session["user_id"])).fetchall()
+    current_cash = result[0]["cash"]
     grand_total += current_cash
 
     # Render index template
-    return render_template("index.html", rows=rows, current_cash=current_cash, grand_total=grand_total)
+    return render_template("index.html", rows=row_list, current_cash=current_cash, grand_total=grand_total)
+
 
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
@@ -248,16 +308,18 @@ def login():
         elif not request.form.get("password"):
             return apology("must provide password", 403)
 
-        # Query database for username
-        rows = db.execute("SELECT * FROM users WHERE username = :username",
-                          username=request.form.get("username"))
+        # Query to select all data from users table
+        query = text("SELECT * FROM users WHERE username = :username") 
+
+        # Fetch the row obtained from the above query
+        result = (connection.execute(query, username=request.form.get('username'))).fetchone()
 
         # Ensure username exists and password is correct
-        if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
+        if not result or not check_password_hash(result[2], request.form.get("password")):
             return apology("invalid username and/or password", 403)
 
         # Remember which user has logged in
-        session["user_id"] = rows[0]["id"]
+        session["user_id"] = result[0]
 
         # Save username to the sesssion
         session["username"] = request.form.get("username")
@@ -343,27 +405,24 @@ def register():
             return apology("Passwords mismatched!", 400)
 
         # Check if username alrady exists
-        users = db.execute("SELECT id FROM users where username = :username LIMIT 1",
-                            username=request.form.get("username"))
+        query = text("SELECT id FROM users where username = :username LIMIT 1") 
+        result = (connection.execute(query, username=request.form.get('username'))).fetchone()
 
-        db.execute("INSERT INTO users (username, hash) VALUES (:username, :hash)",
-                   username=request.form.get("username"), hash=generate_password_hash(request.form.get("password")))
-
-        # If users is empty
-        if users:
+        # If users exists
+        if result:
             return apology("Username not available!", 400)
 
-        # Insert data into database
-        db.execute("INSERT INTO users (username, hash) VALUES (:username, :hash)",
-                              username=request.form.get("username"), hash=generate_password_hash(request.form.get("password")))
+        # Query to insert data into database
+        query = text("INSERT INTO users (username, hash) VALUES (:username, :hash) RETURNING id")
+
+        # Receive the correspondig id
+        rows = (connection.execute(query, username=request.form.get('username'), hash=generate_password_hash(request.form.get('password')))).fetchall()
         
-        # Find the new user's id
-        new_user = db.execute("SELECT id FROM users where username = :username LIMIT 1",
-                              username=request.form.get("username"))
+        # connection.close()
 
         # Save user id to the sesssion
-        session["user_id"] = new_user[0]["id"]
-
+        session["user_id"] = rows[0]["id"]
+        
         # Save username to the sesssion
         session["username"] = request.form.get("username")
 
