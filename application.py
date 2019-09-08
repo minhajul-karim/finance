@@ -51,47 +51,6 @@ if not os.environ.get("API_KEY"):
     raise RuntimeError("API_KEY not set")
 
 
-# @app.route("/")
-# @login_required
-# def index():
-#     """Show portfolio of stocks"""
-
-#     # Fetch data form db
-#     rows = db.execute("SELECT * FROM transactions WHERE userid = :userid ORDER BY symbol", userid=session["user_id"])
-#     grand_total = 0
-
-#     # Travarse all rows for logged in user
-#     if rows:
-#         for row in rows:
-
-#             # Get the symbol from db
-#             symbol = row["symbol"]
-
-#             # Get information for symbol
-#             info = lookup(symbol)
-
-#             # If information is received
-#             if info:
-
-#                 # Total value of each holding
-#                 per_stock_total = row["shares"] * info["price"]
-
-#                 # Calculate total spent money
-#                 grand_total += per_stock_total
-
-#                 # Insert required indices into row to display in template
-#                 row["name"] = info["name"]
-#                 row["price"] = info["price"]
-#                 row["total"] = per_stock_total
-
-#     # Check user's available balance
-#     cash_row = db.execute("SELECT cash FROM users WHERE id = :id", id=session["user_id"])
-#     current_cash = cash_row[0]["cash"]
-#     grand_total += current_cash
-
-#     # Render index template
-#     return render_template("index.html", rows=rows, current_cash=current_cash, grand_total=grand_total)
-
 @app.route("/")
 @login_required
 def index():
@@ -133,7 +92,6 @@ def index():
                 row["name"] = info["name"]
                 row["price"] = info["price"]
                 row["total"] = per_stock_total
-                # return "additional data inserted"
 
     # Check user's available balance
     query = text("SELECT cash FROM users WHERE id = :id")
@@ -183,56 +141,58 @@ def buy():
             new_cost = int(request.form.get("shares"))*float(info["price"])
 
             # Check user's available balance
-            cash_row = db.execute("SELECT cash FROM users WHERE id = :id", id=session["user_id"])
-            current_balance = cash_row[0]["cash"]
+            query = text("SELECT cash FROM users WHERE id = :id")
+            result = (connection.execute(query, id=session["user_id"])).fetchall()
+            current_balance = result[0]["cash"]
 
             # Check user's affordability
             if new_cost > current_balance:
                 return apology("Not enough cash", 400)
 
             # Check if user has purchased same stock before
-            symbol_row = db.execute("SELECT * FROM transactions WHERE userid = :userid AND symbol = :symbol",
-                userid=session["user_id"], symbol=info["symbol"])
+            query = text("SELECT * FROM transactions WHERE userid = :userid AND symbol = :symbol")
+            symbol_row = (connection.execute(query, userid=session["user_id"], symbol=info["symbol"])).fetchall()
 
             # Update shares if user has already purchased a stock before
             if symbol_row:
 
                 # Get the current number of shares
-                current_shares = int(symbol_row[0]["shares"])
+                current_shares = symbol_row[0]["shares"]
 
                 # Calculate updated shares
                 updated_shares = current_shares + int(request.form.get("shares"))
 
-                # Update database
-                db.execute("UPDATE transactions SET shares = :shares WHERE userid = :userid AND symbol = :symbol",
-                    shares=updated_shares, userid=session["user_id"], symbol=info["symbol"])
+                # Update transactions table
+                query = text("UPDATE transactions SET shares = :shares WHERE userid = :userid AND symbol = :symbol")
+                connection.execute(query, shares=updated_shares, userid=session["user_id"], symbol=info["symbol"])
 
                 # Calculate new cash
                 updated_cash = current_balance - new_cost
 
-                # Update database
-                db.execute("UPDATE users SET cash = :cash WHERE id = :id", cash=updated_cash, id=session["user_id"])
+                # Update users table
+                query = text("UPDATE users SET cash = :cash WHERE id = :id")
+                connection.execute(query, shares=updated_shares, cash=updated_cash, id=session["user_id"])
 
             # Insert data into transactions table
             else:
 
-                # Insert data into database
-                db.execute("INSERT INTO transactions (userid, symbol, shares) VALUES (:userid, :symbol, :shares)",
-                  userid=session["user_id"], symbol=info["symbol"], shares=request.form.get("shares"))
-
+                # Insert transactions table
+                query = text("INSERT INTO transactions (userid, symbol, shares) VALUES (:userid, :symbol, :shares)")
+                connection.execute(query, userid=session["user_id"], symbol=info["symbol"], shares=request.form.get("shares"))
+                
                 # Calculate post purchase balance
-                updated_balance = current_balance - new_cost
+                updated_cash = current_balance - new_cost
 
                 # Update cash of users table
-                db.execute("UPDATE users SET cash = :cash WHERE id = :id", cash=updated_balance, id=session["user_id"])
-
+                query = text("UPDATE users SET cash = :cash WHERE id = :id")
+                connection.execute(query, userid=session["user_id"], cash=updated_cash, id=session["user_id"])
 
             # Get transaction time
             current_time = (datetime.now()).replace(microsecond=0)
 
-            # Update history
-            db.execute("INSERT INTO history (userid, symbol, shares, price, date_time) VALUES (:userid, :symbol, :shares, :price, :date_time)",
-                userid=session["user_id"], symbol=info["symbol"], shares=request.form.get("shares"), price=info["price"], date_time=current_time)
+            # Update history table
+            query = text("INSERT INTO history (userid, symbol, shares, price, date_time) VALUES (:userid, :symbol, :shares, :price, :date_time)")
+            connection.execute(query, userid=session["user_id"], symbol=info["symbol"], shares=request.form.get("shares"), price=info["price"], date_time=current_time)
 
         # Notify user for invalid symbol
         else:
@@ -255,7 +215,8 @@ def check():
     if len(request.args.get("username")) >= 1:
 
         # Query db for username
-        user_row = db.execute("SELECT id FROM users where username = :username LIMIT 1", username=request.args.get("username"))
+        query = text("SELECT id FROM users where username = :username LIMIT 1") 
+        user_row = connection.execute(query, username=request.args.get("username")).fetchall()
 
         # If username exists
         if user_row:
@@ -274,20 +235,31 @@ def history():
     """Show history of transactions"""
 
     # Fetch data form db
-    rows = db.execute("SELECT * FROM history WHERE userid = :userid ORDER BY date_time DESC", userid=session["user_id"])
+    query = text("SELECT * FROM history WHERE userid = :userid ORDER BY date_time DESC") 
+    rows = (connection.execute(query, userid=session["user_id"])).fetchall()
 
-    # Travarse all rows for logged in user
-    for row in rows:
-        # Get the symbol from db
-        symbol = row["symbol"]
+    # Declare an empty list
+    row_list = []
 
-        # Get information for symbol
-        info = lookup(symbol)
+    # If hisoty exists
+    if rows:
 
-        # Insert required indices into row to display in template
-        row["price"] = usd(info["price"])
+        # Convert Resultproxy objetcs into list of dictionaries
+        for row in rows:
+            row_list.append(dict(row))
+        
+        # Travarse all rows for logged in user
+        for row in row_list:
+            
+            # Get information for symbol
+            info = lookup(row["symbol"])
 
-    return render_template("history.html", rows=rows)
+            # Insert required indices into row to display in template
+            row["price"] = info["price"]
+    else:
+        message = "No history available. Please buy some shares"
+
+    return render_template("history.html", rows=row_list, message=message)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -445,6 +417,7 @@ def sell():
 
     # Grab form data if user submits the form
     if request.method == "POST":
+        
         # Check for empty stock
         if not request.form.get("symbol"):
             return apology("Must provide symbol", 400)
@@ -454,11 +427,11 @@ def sell():
             return apology("Must provide number of shares", 400)
 
         # Number of shares of a stock
-        shares_row = db.execute("SELECT shares FROM transactions WHERE userid = :userid AND symbol = :symbol",
-            userid=session["user_id"], symbol=request.form.get("symbol"))
+        query = text("SELECT shares FROM transactions WHERE userid = :userid AND symbol = :symbol") 
+        result = (connection.execute(query, userid=session["user_id"], symbol=request.form.get("symbol"))).fetchall()
 
         # Restrict user from selling more shares than s/he has
-        if int(request.form.get("shares")) > shares_row[0]["shares"]:
+        if int(request.form.get("shares")) > result[0]["shares"]:
             return apology("Don't have enough shares", 400)
 
         # Get information about this stock
@@ -468,28 +441,32 @@ def sell():
         selling_price = info["price"] * int(request.form.get("shares"))
 
         # Update the cash in users table
-        cash_row = db.execute("SELECT cash FROM users WHERE id = :id", id=session["user_id"])
+        query = text("SELECT cash FROM users WHERE id = :id") 
+        cash_row = (connection.execute(query, id=session["user_id"])).fetchall()
+
+        # Update cash in users table
         updated_cash = cash_row[0]["cash"] + selling_price
-        db.execute("UPDATE users SET cash = :cash WHERE id = :id", cash=updated_cash, id=session["user_id"])
+        query = text("UPDATE users SET cash = :cash WHERE id = :id")
+        connection.execute(query, cash=updated_cash, id=session["user_id"])
 
         # DELETE row if user wills to sell all of his shares of a stock
-        if (int(request.form.get("shares")) == shares_row[0]["shares"]):
-            db.execute("DELETE FROM transactions WHERE userid = :userid AND symbol = :symbol",
-                userid=session["user_id"], symbol=request.form.get("symbol"))
+        if (int(request.form.get("shares")) == result[0]["shares"]):
+            query = text("DELETE FROM transactions WHERE userid = :userid AND symbol = :symbol")
+            connection.execute(query, userid=session["user_id"], symbol=request.form.get("symbol"))
 
-        # Update number of shares
+        # Update number of shares in transaction table
         else:
-            updated_share = shares_row[0]["shares"] - int(request.form.get("shares"))
-            db.execute("UPDATE transactions SET shares = :shares WHERE userid = :userid AND symbol = :symbol",
-                shares=updated_share, userid=session["user_id"], symbol=request.form.get("symbol"))
+            updated_share = result[0]["shares"] - int(request.form.get("shares"))
+            query = text("UPDATE transactions SET shares = :shares WHERE userid = :userid AND symbol = :symbol")
+            connection.execute(query, shares=updated_share, userid=session["user_id"], symbol=request.form.get("symbol"))
 
         # Get transaction time
         current_time = (datetime.now()).replace(microsecond=0)
         sold_shares = int(request.form.get("shares")) * -1
 
         # Update history table
-        db.execute("INSERT INTO history (userid, symbol, shares, price, date_time) VALUES (:userid, :symbol, :shares, :price, :date_time)",
-            userid=session["user_id"], symbol=request.form.get("symbol"), shares=sold_shares, price=info["price"], date_time=current_time)
+        query = text("INSERT INTO history (userid, symbol, shares, price, date_time) VALUES (:userid, :symbol, :shares, :price, :date_time)")
+        connection.execute(query, userid=session["user_id"], symbol=request.form.get("symbol"), shares=sold_shares, price=info["price"], date_time=current_time)
 
         # Send the flash message to homepage
         flash("Congrats! You've successfully sold!")
@@ -499,7 +476,8 @@ def sell():
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
-        symbol_rows = db.execute("SELECT symbol FROM transactions WHERE userid = :userid GROUP BY symbol", userid=session["user_id"])
+        query = text("SELECT symbol FROM transactions WHERE userid = :userid GROUP BY symbol") 
+        symbol_rows = (connection.execute(query, userid=session["user_id"])).fetchall()
         return render_template("sell.html", symbol_rows=symbol_rows)
 
 

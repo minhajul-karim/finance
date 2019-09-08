@@ -6,16 +6,19 @@ $(document).ready(function() {
 
     // When user presses any key in username field
     $("#usr").on("change keyup paste", function() {
+    	
     	$name = $("#usr").val();
+
     });
 
-	/************* validation for other registration fields ***********/
+	/************* Registration form validation ***********/
 
 	$("#reg_form").validate({
+		// Define rules
 		rules: {
 			username: {
 				required: true,
-				minlength: 1
+				minlength: 3
 			},
 
 			password: {
@@ -33,10 +36,11 @@ $(document).ready(function() {
 			}
 		},
 
+		// Error Messages
 		messages: {
 			username: {
 				required: "Please enter username",
-				minlength: "Username must contain at least one character"
+				minlength: "Username must contain at least three character"
 			},
 
 			password: {
@@ -54,37 +58,39 @@ $(document).ready(function() {
 			}
 		},
 
+		// Username availability check after form submission
 		submitHandler: function(form) {
 
-			$.ajax({
+			if ($name.length >= 3) {
 
-				dataType: "json",
-				url: '/check',
-	        	data: {
-	        		username: $name
-	    		},
+				$.ajax({
 
-	    		type: 'GET',
+					dataType: "json",
+					url: '/check',
+					data: {
+						username: $name
+					},
 
-	    		// If ajax call ends successfully
-	        	success: function(data) {
+					type: 'GET',
 
-	        		if (data) {
+					// If ajax call ends successfully
+					success: function(data) {
 
-	        			// Notify user that username is available
-	        			$("#availability").html("Username avaialable").addClass("available");
-	        			$("#availability").removeClass("notAvailable");
-	        			form.submit();
-	        		}
-	        		else {
+						if (data) {
+							// Submit the form
+							$("#availability").html("");
+							$("#availability").removeClass("notAvailable");
+							form.submit();
+						}
 
-	        			// Notify user that username is available
-	        			$("#availability").html("Username not avaialable").addClass("notAvailable");
-	        			$("#availability").removeClass("available");
-	        		}
-	    		}
+						else {
+							// Notify user that username is not available
+							$("#availability").html("Username not avaialable").addClass("notAvailable");
+						}
+					}
 
-		    }); // ajax ends
+				}); // ajax ends
+			} 
 		}
 
 	});
@@ -132,7 +138,7 @@ $(document).ready(function() {
 
 	});
 
-	/*********** Quote validation *************/
+	/*********** Quote form validation *************/
 	$("#quote_form").validate({
 		rules: {
 			symbol: {
@@ -143,6 +149,52 @@ $(document).ready(function() {
 		messages: {
 			symbol: {
 				required: "Please enter a symbol"
+			}
+		}
+
+	});
+
+	/*********** Buy form validation *************/
+	$("#buy_form").validate({
+		rules: {
+			symbol: {
+				required: true
+			},
+
+			shares: {
+				required: true
+			}
+		},
+
+		messages: {
+			symbol: {
+				required: "Please enter a symbol"
+			},
+			shares: {
+				required: "Please enter amount of shares"
+			}
+		}
+
+	});
+
+	/*********** Sell form validation *************/
+	$("#sell_form").validate({
+		rules: {
+			symbol: {
+				required: true
+			},
+
+			shares: {
+				required: true
+			}
+		},
+
+		messages: {
+			symbol: {
+				required: "Please enter a symbol"
+			},
+			shares: {
+				required: "Please enter amount of shares"
 			}
 		}
 
@@ -182,9 +234,7 @@ $(document).ready(function() {
 
 		});
 
-		// ajax ends
-
-	}); // click function ends
+	});
 
 
 	// When user clicks the sell button of index page
@@ -220,8 +270,12 @@ $(document).ready(function() {
 
 		});
 
-		// ajax ends
 
-	}); // click function ends
+	});
 
-}); // doc ends
+	// Remove username availability error message
+	$("#usr").on("click", function(){
+		$("#availability").html("");
+	});
+
+});

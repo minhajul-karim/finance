@@ -58,16 +58,18 @@ main img
 
 #reg_form label,
 #login_form label,
-#quote_form label {
+#quote_form label,
+#buy_form label,
+#sell_form label {
     display: block;
     color: red;
     font-size: 13px;
 }
 
-.available {
+/*.available {
     color: green;
     font-size: 13px;
-}
+}*/
 
 .notAvailable {
     color: red;
