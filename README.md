@@ -4,7 +4,7 @@
 **The Challenge:**
 The description of this project can be found [here](https://docs.cs50.net/2019/x/psets/8/finance/finance.html)
 
-**My role:**
+**My Detailed Role:**
 1. Implement register and check functions in Back end so that, users can register.
 2. Implement username availability along with other input validation in the Front end.
 3. Implement index function which portrays user's current portfolio.
@@ -16,3 +16,4 @@ The description of this project can be found [here](https://docs.cs50.net/2019/x
 1. Input validation for all kind for all forms in front end and back end.
 2. Make sure password contains at least one capital letter, one number, and one special character.
 3. Implement in-page buy/sell features for each stock.
+4. Change the Database from SQLite to Postgress in order to host it on Heroku.
