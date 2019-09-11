@@ -22,7 +22,7 @@
           <td><span class="instruction">Symbol:</span>&nbsp;{{ row["symbol"] }}</td>
           <td><span class="instruction">Shares:</span>&nbsp;{{ row["shares"] }}</td>
           <td><span class="instruction">Price:</span>&nbsp;{{ row["price"] | usd }}</td>
-          <td><span class="instruction">Transacted:</span>&nbsp;{{ row["date_time"] }}</td>
+          <td><span class="instruction">Transacted:</span>&nbsp;{{ row["date_time"] | utc_to_local }}</td>
         </tr>
       {% endfor %}
       </tbody>

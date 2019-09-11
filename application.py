@@ -10,7 +10,7 @@ from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 
-from helpers import apology, login_required, lookup, usd
+from helpers import apology, login_required, lookup, usd, utc_to_local
 
 database_file = "postgres://faoqgogsskzcek:795a7c81e2e6c3cdc7634e7e71a2c39acc0238ceae5efa9644c76ab0b257f97c@ec2-174-129-227-146.compute-1.amazonaws.com:5432/ddf9frqo66ole3"
 
@@ -21,6 +21,7 @@ app.secret_key = "�#�-ާg'���3RCw"
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.config["SQLALCHEMY_DATABASE_URI"] = database_file
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
@@ -38,11 +39,13 @@ def after_request(response):
 
 # Custom filter
 app.jinja_env.filters["usd"] = usd
+app.jinja_env.filters["utc_to_local"] = utc_to_local
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_FILE_DIR"] = mkdtemp()
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 Session(app)
 
 
@@ -188,7 +191,7 @@ def buy():
                 connection.execute(query, userid=session["user_id"], cash=updated_cash, id=session["user_id"])
 
             # Get transaction time
-            current_time = (datetime.now()).replace(microsecond=0)
+            current_time = (datetime.utcnow()).replace(microsecond=0)
 
             # Update history table
             query = text("INSERT INTO history (userid, symbol, shares, price, date_time) VALUES (:userid, :symbol, :shares, :price, :date_time)")
@@ -256,10 +259,8 @@ def history():
 
             # Insert required indices into row to display in template
             row["price"] = info["price"]
-    else:
-        message = "No history available. Please buy some shares"
 
-    return render_template("history.html", rows=row_list, message=message)
+    return render_template("history.html", rows=row_list)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -461,7 +462,7 @@ def sell():
             connection.execute(query, shares=updated_share, userid=session["user_id"], symbol=request.form.get("symbol"))
 
         # Get transaction time
-        current_time = (datetime.now()).replace(microsecond=0)
+        current_time = (datetime.utcnow()).replace(microsecond=0)
         sold_shares = int(request.form.get("shares")) * -1
 
         # Update history table

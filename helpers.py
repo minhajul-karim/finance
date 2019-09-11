@@ -1,6 +1,8 @@
 import os
 import requests
 import urllib.parse
+import tzlocal
+import pytz
 
 from flask import redirect, render_template, request, session
 from functools import wraps
@@ -61,3 +63,11 @@ def lookup(symbol):
 def usd(value):
     """Format value as USD."""
     return f"${value:,.2f}"
+
+def utc_to_local(current_utc_time):
+    """Convert UTC time to local time"""
+
+    local_timezone = tzlocal.get_localzone()
+    local_time = current_utc_time.replace(tzinfo=pytz.utc).astimezone(local_timezone) #2019-09-11 15:03:03.743077+06:00
+    formatted_time = local_time.strftime("%d-%m-%Y %I:%M:%S %p") #11-09-2019 03:38:22 PM
+    return formatted_time
