@@ -7,10 +7,11 @@ from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
+from dateutil import tz
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 
-from helpers import apology, login_required, lookup, usd, utc_to_local
+from helpers import apology, login_required, lookup, usd
 
 database_file = "postgres://faoqgogsskzcek:795a7c81e2e6c3cdc7634e7e71a2c39acc0238ceae5efa9644c76ab0b257f97c@ec2-174-129-227-146.compute-1.amazonaws.com:5432/ddf9frqo66ole3"
 
@@ -39,7 +40,6 @@ def after_request(response):
 
 # Custom filter
 app.jinja_env.filters["usd"] = usd
-app.jinja_env.filters["utc_to_local"] = utc_to_local
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_FILE_DIR"] = mkdtemp()
@@ -241,6 +241,13 @@ def history():
     query = text("SELECT * FROM history WHERE userid = :userid ORDER BY date_time DESC") 
     rows = (connection.execute(query, userid=session["user_id"])).fetchall()
 
+    # Get local time zone from frontend
+    local_zone = request.args.get("zone")
+    
+    # source https://stackoverflow.com/questions/4770297/convert-utc-datetime-string-to-local-datetime
+    from_zone = tz.gettz("UTC")
+    to_zone = tz.gettz(local_zone)
+
     # Declare an empty list
     row_list = []
 
@@ -259,6 +266,21 @@ def history():
 
             # Insert required indices into row to display in template
             row["price"] = info["price"]
+
+            # Get the date_time column
+            utc = row["date_time"]
+
+            # Tell the datetime object that it's in UTC
+            utc = utc.replace(tzinfo=from_zone)
+
+            # Convert to local time
+            local_time = utc.astimezone(to_zone)
+
+            # Format local time
+            formatted_local_time = local_time.strftime("%d-%m-%Y %I:%M:%S %p")
+
+            # Insert into row_list
+            row["formatted_local_time"] = formatted_local_time
 
     return render_template("history.html", rows=row_list)
 
@@ -507,6 +529,7 @@ def sellthis():
     """Sell shares of specific stock"""
 
     return render_template("sell_this.html", symbol=session["symbol"])
+
 
 def errorhandler(e):
     """Handle error"""
