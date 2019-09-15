@@ -242,8 +242,8 @@ def history():
     rows = (connection.execute(query, userid=session["user_id"])).fetchall()
 
     # Get local time zone from frontend
-    local_zone = request.args.get("zone")
-    print(local_zone)
+    # local_zone = request.args.get("zone")
+    local_zone = "Asia/Shanghai"
     
     # source https://stackoverflow.com/questions/4770297/convert-utc-datetime-string-to-local-datetime
     from_zone = tz.gettz("UTC")
