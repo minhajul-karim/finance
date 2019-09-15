@@ -215,7 +215,7 @@ def buy():
 def check():
     """Return true if username available, else false, in JSON format"""
 
-    if len(request.args.get("username")) >= 1:
+    if len(request.args.get("username")) >= 3:
 
         # Query db for username
         query = text("SELECT id FROM users where username = :username LIMIT 1") 
@@ -229,7 +229,7 @@ def check():
         else:
             return jsonify(True)
     else:
-        apology("Username must contain at least one character", 403)
+        apology("Username must contain at least three characters", 403)
 
 
 @app.route("/history")
