@@ -283,7 +283,7 @@ def history():
             print(type(formatted_local_time))
 
             # Insert into row_list
-            row["formatted_local_time"] = formatted_local_time
+            row["transaction_time"] = formatted_local_time
 
     return render_template("history.html", rows=row_list)
 
