@@ -287,7 +287,7 @@ $(document).ready(function() {
 	        zone: local_time_zone
 	    },
 	    type: "GET",
-	    url: "/history",
+	    url: "/history"
 
 	});
 

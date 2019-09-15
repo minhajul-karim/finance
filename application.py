@@ -243,7 +243,10 @@ def history():
 
     # Get local time zone from frontend
     local_zone = request.args.get("zone")
-    return local_zone
+    if local_zone:
+        return local_zone
+    else:
+        return "No zone received"
     # local_zone = "Asia/Dhaka"
     
     # source https://stackoverflow.com/questions/4770297/convert-utc-datetime-string-to-local-datetime
