@@ -280,6 +280,7 @@ def history():
             # Format local time
             formatted_local_time = local_time.strftime("%d-%m-%Y %I:%M:%S %p")
             print(formatted_local_time)
+            print(type(formatted_local_time))
 
             # Insert into row_list
             row["formatted_local_time"] = formatted_local_time
