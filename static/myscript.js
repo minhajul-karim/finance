@@ -281,19 +281,15 @@ $(document).ready(function() {
 	// Get the local timezone
 	let local_time_zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 	console.log(local_time_zone);
-	
-	$.ajax({
-	    data: {
-	        zone: local_time_zone
-	    },
-	    type: "GET",
-	    url: "/history",
 
-	})
-
-		.done( function(data) {
-			console.log("Sent data");
-		});
-
+	var request = $.ajax({
+		url: "/history",
+		type: "GET",
+		data: {zone : "Asia/Dhaka"},
+		dataType: "text",
+		success: function(data) {
+			console.log("Sent");
+		}
+	});
 
 });
