@@ -280,7 +280,7 @@ $(document).ready(function() {
 
 	// Get the local timezone
 	let local_time_zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-	alert(local_time_zone);
+	console.log(local_time_zone);
 	
 	$.ajax({
 	    data: {

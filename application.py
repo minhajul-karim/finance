@@ -243,6 +243,7 @@ def history():
 
     # Get local time zone from frontend
     local_zone = request.args.get("zone")
+    console.log(local_zone);
     
     # source https://stackoverflow.com/questions/4770297/convert-utc-datetime-string-to-local-datetime
     from_zone = tz.gettz("UTC")
@@ -278,6 +279,7 @@ def history():
 
             # Format local time
             formatted_local_time = local_time.strftime("%d-%m-%Y %I:%M:%S %p")
+            console.log(formatted_local_time)
 
             # Insert into row_list
             row["formatted_local_time"] = formatted_local_time
