@@ -278,18 +278,4 @@ $(document).ready(function() {
 		$("#availability").html("");
 	});
 
-	// Get the local timezone
-	let local_time_zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-	console.log(local_time_zone);
-
-	var request = $.ajax({
-		url: "/history",
-		type: "GET",
-		data: {zone : "Asia/Dhaka"},
-		dataType: "text",
-		success: function(data) {
-			console.log("Sent");
-		}
-	});
-
 });

@@ -54,7 +54,7 @@ if not os.environ.get("API_KEY"):
     raise RuntimeError("API_KEY not set")
 
 
-@app.route("/")
+@app.route("/", methods=["GET"])
 @login_required
 def index():
     """Show portfolio of stocks"""
@@ -240,56 +240,48 @@ def history():
     # Fetch data form db
     query = text("SELECT * FROM history WHERE userid = :userid ORDER BY date_time DESC") 
     rows = (connection.execute(query, userid=session["user_id"])).fetchall()
-
-    # Get local time zone from frontend
-    local_zone = request.args.get("zone")
-    if local_zone:
-        return local_zone
-    else:
-        return "No zone received"
-    # local_zone = "Asia/Dhaka"
     
+    local_zone = "Asia/Dhaka"
+
     # source https://stackoverflow.com/questions/4770297/convert-utc-datetime-string-to-local-datetime
-    # from_zone = tz.gettz("UTC")
-    # to_zone = tz.gettz(local_zone)
+    from_zone = tz.gettz("UTC")
+    to_zone = tz.gettz(local_zone)
 
-    # # Declare an empty list
-    # row_list = []
+    # Declare an empty list
+    row_list = []
 
-    # # If hisoty exists
-    # if rows:
+    # If hisoty exists
+    if rows:
 
-    #     # Convert Resultproxy objetcs into list of dictionaries
-    #     for row in rows:
-    #         row_list.append(dict(row))
+        # Convert Resultproxy objetcs into list of dictionaries
+        for row in rows:
+            row_list.append(dict(row))
         
-    #     # Travarse all rows for logged in user
-    #     for row in row_list:
+        # Travarse all rows for logged in user
+        for row in row_list:
             
-    #         # Get information for symbol
-    #         info = lookup(row["symbol"])
+            # Get information for symbol
+            info = lookup(row["symbol"])
 
-    #         # Insert required indices into row to display in template
-    #         row["price"] = info["price"]
+            # Insert required indices into row to display in template
+            row["price"] = info["price"]
 
-    #         # Get the date_time column
-    #         utc = row["date_time"]
+            # Get the date_time column
+            utc = row["date_time"]
 
-    #         # Tell the datetime object that it's in UTC
-    #         utc = utc.replace(tzinfo=from_zone)
+            # Tell the datetime object that it's in UTC
+            utc = utc.replace(tzinfo=from_zone)
 
-    #         # Convert to local time
-    #         local_time = utc.astimezone(to_zone)
+            # Convert to local time
+            local_time = utc.astimezone(to_zone)
 
-    #         # Format local time
-    #         formatted_local_time = local_time.strftime("%d-%m-%Y %I:%M:%S %p")
-    #         print(formatted_local_time)
-    #         print(type(formatted_local_time))
+            # Format local time
+            formatted_local_time = local_time.strftime("%d-%m-%Y %I:%M:%S %p")
 
-    #         # Insert into row_list
-    #         row["transaction_time"] = formatted_local_time
+            # Insert into row_list
+            row["transaction_time"] = formatted_local_time
 
-    # return render_template("history.html", rows=row_list)
+    return render_template("history.html", rows=row_list)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -536,7 +528,6 @@ def sellthis():
     """Sell shares of specific stock"""
 
     return render_template("sell_this.html", symbol=session["symbol"])
-
 
 def errorhandler(e):
     """Handle error"""
