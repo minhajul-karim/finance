@@ -1,3 +1,4 @@
+
 nav .navbar-brand
 {
     /* size for brand */
@@ -20,6 +21,14 @@ nav .navbar-brand .yellow
 nav .navbar-brand .green
 {
     color: #2e944b;
+}
+nav .navbar-brand .orange
+{
+    color: #FFA500;
+}
+nav .navbar-brand .white
+{
+    color: #FFFFFF;
 }
 
 main .form-control
@@ -46,11 +55,38 @@ main img
     max-width: 100%;
 }
 
-.instruction {
+#login-area {
+    text-align: left !important;
+}
+
+#registration-area .form-control
+{
+    width: 300px;
+}
+
+a
+{
+    color: #E74C3C;
+}
+
+a:hover
+{
+    text-decoration: none;
+    color: #999999;
+}
+
+#navbar a:hover
+{
+    color: #E74C3C !important;
+}
+
+.instruction
+{
     display: none;
 }
 
-.bottom_tr {
+.bottom_tr
+{
     display: none;
 }
 
@@ -60,56 +96,112 @@ main img
 #login_form label,
 #quote_form label,
 #buy_form label,
-#sell_form label {
+#sell_form label
+{
     display: block;
     color: red;
     font-size: 13px;
 }
 
-/*.available {
-    color: green;
-    font-size: 13px;
-}*/
+#login_form
+{
+    margin-left: 80px;
+}
 
 .notAvailable {
     color: red;
     font-size: 13px;
 }
 
+/*Forgot password anchor*/
+#forget-password
+{
+    display: block;
+    margin: 10px 0;
+}
+
+/*Style for Darkly*/
+
+/*Change top navigation bg color of homepage*/
+.bg-light.navbar
+{
+    background-color: #999999 !important;
+}
+
+/*Remove nav border of homepage*/
+.border {
+    border: 0 !important;
+}
+
+#faq-area
+{
+    text-align: left !important;
+}
+
 /*Responsive Portfolio Table*/
 
-@media (max-width: 800px){
-    thead {
+@media all and (max-width: 800px)
+{
+    thead
+    {
         display: none;
     }
 
-    tr {
+    tr
+    {
         border-bottom: 20px solid #FFFFFF;
     }
 
-    td {
+    td
+    {
         display: block;
         widows: 100%;
         text-align: left;
     }
 
-    .instruction {
+    .instruction
+    {
         float: left;
         display: block;
     }
 
-    .to_be_hidden {
+    .to_be_hidden
+    {
         display: none;
     }
 
-    .bottom_tr {
+    .bottom_tr
+    {
         display: block;
+    }
+
+    #reg_form
+    {
+        margin-left: 0;
     }
 }
 
+@media all and (max-width: 768px)
+{
+    #login-faq
+    {
+        display: none;
+    }
 
-@media (max-width: 460px){
-    .p-5 {
+    #login_form
+    {
+        margin-left: 0;
+    }
+
+    #login-area
+    {
+        text-align: center !important;
+    }
+} 
+
+@media all and (max-width: 460px){
+    .p-5
+    {
         padding: 10px !important;
     }
 }

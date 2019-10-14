@@ -6,18 +6,22 @@
 
 {% block main %}
 
+<div id="registration-area">
     <form action="/register" method="post" id="reg_form">
         <div class="form-group">
-            <input autofocus autocomplete="off" class="form-control" name="username" placeholder="Username" type="text" id="usr">
+            <input autofocus autocomplete="off" class="form-control" name="username" placeholder="Enter a username" type="text" id="usr">
             <p id="availability"></p>
         </div>
         <div class="form-group">
-            <input autocomplete="off" class="form-control" name="password" placeholder="Password" type="password" id="pwd1">
+            <input autocomplete="off" class="form-control" name="password" placeholder="Enter password" type="password" id="pwd1">
         </div>
         <div class="form-group">
-            <input autocomplete="off" class="form-control" name="confirmation" placeholder="Confirm Password" type="password" id="pwd2">
+            <input autocomplete="off" class="form-control" name="confirmation" placeholder="Confirm password" type="password" id="pwd2">
         </div>
-        <button class="btn btn-primary" type="submit">Register</button>
+        <div class="form-group">
+            <button class="btn btn-primary" type="submit">Register</button>
+        </div>
     </form>
+</div>
 
 {% endblock %}
