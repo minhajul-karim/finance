@@ -105,64 +105,6 @@ def index():
     # Render index template
     return render_template("index.html", rows=row_list, current_cash=current_cash, grand_total=grand_total)
 
-# New home route
-
-# @app.route("/", methods=["GET"])
-# def index():
-#     """Show portfolio of stocks"""
-
-#     # Check if user is logged in
-#     if ("user_id" in session):
-
-#         # Query to select all data from users table
-#         query = text("SELECT * FROM transactions WHERE userid = :userid ORDER BY symbol") 
-
-#         # Fetch all rows obtained from the above query
-#         rows = (connection.execute(query, userid=session["user_id"])).fetchall()
-#         grand_total = 0
-
-#         # Declare an empty list
-#         row_list = []
-
-#         # Travarse all rows for logged in user
-#         if rows:
-
-#             # Convert Resultproxy objetcs into list of dictionaries
-#             for row in rows:
-#                 row_list.append(dict(row))
-
-#             # Add additional information to row_list
-#             for row in row_list:
-
-#                 # Get information for symbol
-#                 info = lookup(row["symbol"])
-
-#                 # If information is received
-#                 if info:
-
-#                     # Total value of each holding
-#                     per_stock_total = row["shares"] * info["price"]
-
-#                     # Calculate total spent money
-#                     grand_total += per_stock_total
-
-#                     # Insert required indices into row to display in template
-#                     row["name"] = info["name"]
-#                     row["price"] = info["price"]
-#                     row["total"] = per_stock_total
-
-#         # Check user's available balance
-#         query = text("SELECT cash FROM users WHERE id = :id")
-#         result = (connection.execute(query, id=session["user_id"])).fetchall()
-#         current_cash = result[0]["cash"]
-#         grand_total += current_cash
-
-#         # Render index template
-#         return render_template("index.html", rows=row_list, current_cash=current_cash, grand_total=grand_total)
-    
-#     else:
-#         return render_template("register.html")
-
 
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
