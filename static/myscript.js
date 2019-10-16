@@ -14,6 +14,7 @@ $(document).ready(function() {
 	/************* Registration form validation ***********/
 
 	$("#reg_form").validate({
+		
 		// Define rules
 		rules: {
 			username: {
