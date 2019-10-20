@@ -2,24 +2,16 @@
 
 $(document).ready(function() {
 
-    $name = "";
-
-    // When user presses any key in username field
-    $("#usr").on("change keyup paste", function() {
-    	
-    	$name = $("#usr").val();
-
-    });
-
 	/************* Registration form validation ***********/
 
 	$("#reg_form").validate({
-		
+	
 		// Define rules
 		rules: {
-			username: {
+
+			email: {
 				required: true,
-				minlength: 3
+				validEmail: true
 			},
 
 			password: {
@@ -39,9 +31,10 @@ $(document).ready(function() {
 
 		// Error Messages
 		messages: {
-			username: {
-				required: "Please enter username",
-				minlength: "Username must contain at least three character"
+
+			email: {
+				required: "Pleaase enter a valid email address",
+				validEmail: "Pleaase enter a valid email address"
 			},
 
 			password: {
@@ -62,36 +55,33 @@ $(document).ready(function() {
 		// Username availability check after form submission
 		submitHandler: function(form) {
 
-			if ($name.length >= 3) {
+			$.ajax({
 
-				$.ajax({
+				dataType: "json",
+				url: '/check',
+				data: {
+					mail: $("#mail").val()
+				},
 
-					dataType: "json",
-					url: '/check',
-					data: {
-						username: $name
-					},
+				type: 'GET',
 
-					type: 'GET',
+				// If ajax call ends successfully
+				success: function(data) {
 
-					// If ajax call ends successfully
-					success: function(data) {
-
-						if (data) {
-							// Submit the form
-							$("#availability").html("");
-							$("#availability").removeClass("notAvailable");
-							form.submit();
-						}
-
-						else {
-							// Notify user that username is not available
-							$("#availability").html("Username not avaialable").addClass("notAvailable");
-						}
+					if (data) {
+						// Submit the form
+						$("#availability").html("");
+						$("#availability").removeClass("notAvailable");
+						form.submit();
 					}
 
-				}); // ajax ends
-			} 
+					else {
+						// Notify user that username is not available
+						$("#availability").html("Someone is already using that email").addClass("notAvailable");
+					}
+				}
+
+			}); // ajax ends
 		}
 
 	});
@@ -111,6 +101,10 @@ $(document).ready(function() {
 	// Method to check special characters
 	$.validator.addMethod("specialChars", function(value) {
 		return /\W/.test(value);
+	});
+
+	$.validator.addMethod("validEmail", function(value) {
+		return /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/.test(value);
 	});
 
 
@@ -275,7 +269,7 @@ $(document).ready(function() {
 	});
 
 	// Remove username availability error message
-	$("#usr").on("click", function(){
+	$("#mail").on("click", function(){
 		$("#availability").html("");
 	});
 

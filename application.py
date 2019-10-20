@@ -1,4 +1,5 @@
 import os
+import re
 
 from cs50 import SQL
 from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
@@ -106,6 +107,181 @@ def index():
     return render_template("index.html", rows=row_list, current_cash=current_cash, grand_total=grand_total)
 
 
+@app.route("/check", methods=["GET"])
+def check():
+    """Return true if email is available, else false, in JSON format"""
+
+    # Query db for email
+    query = text("SELECT id FROM users where email = :email LIMIT 1") 
+    result = connection.execute(query, email=request.args.get("mail")).fetchall()
+
+    # If email exists
+    if result:
+        return jsonify(False)
+
+    # email doesn't exist
+    else:
+        return jsonify(True)
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    """Register user"""
+
+    # Clear any previous session
+    session.clear()
+
+    # User reached route via POST (as by submitting a form via POST)
+    if request.method == "POST":
+
+        # Ensure Email was submitted
+        if not request.form.get("email"):
+            return apology("Must provide email", 400)
+
+        # Ensure if email is valid
+        elif not (re.search(r"(^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$)", 
+                  request.form.get("email"))):
+            return apology("Must provide valid email", 400)
+
+        # Ensure password was submitted
+        elif not request.form.get("password"):
+            return apology("Must provide password", 400)
+
+        # Ensure password meets conditions
+        elif not (re.search(r"[A-Z]+", request.form.get("password"))):
+            return apology("Password must contain one capital letter");
+
+        elif not (re.search(r"[0-9]+", request.form.get("password"))):
+            return apology("Password must contain one digit");
+
+        elif not (re.search(r"\W", request.form.get("password"))):
+            return apology("Password must contain one special character");
+
+         # Ensure password confirmation was submitted
+        elif not request.form.get("confirmation"):
+            return apology("Must provide password again", 400)
+
+        # Check both passwords
+        if request.form.get("password") != request.form.get("confirmation"):
+            return apology("Passwords mismatched!", 400)
+
+        # Check if email alrady exists
+        query = text("SELECT id FROM users where email = :email LIMIT 1") 
+        result = (connection.execute(query, email=request.form.get('email'))).fetchall()
+
+        # If users exists
+        if result:
+            return apology("Email is not available!", 400)
+
+        # Query to insert data into database
+        query = text("INSERT INTO users (hash, email) VALUES (:hash, :email) RETURNING id")
+
+        # Receive the correspondig id
+        rows = (connection.execute(query, hash=generate_password_hash(request.form.get('password')), 
+                email=request.form.get("email"))).fetchall()
+
+        # Save user id to the sesssion
+        session["user_id"] = rows[0]["id"]
+        
+        # Save email to the sesssion
+        session["email"] = request.form.get("username")
+
+        # Send the flash message to homepage
+        flash("Congrats!")
+
+        # Redirect user to home page
+        return redirect(url_for("index"))
+
+
+    # User reached route via GET (as by clicking a link or via redirect)
+    else:
+        return render_template("register.html")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    """Log user in"""
+
+    # Forget any user_id
+    session.clear()
+
+    # User reached route via POST (as by submitting a form via POST)
+    if request.method == "POST":
+
+        # Ensure username was submitted
+        if not request.form.get("email"):
+            return apology("must provide email", 403)
+
+        # Ensure password was submitted
+        elif not request.form.get("password"):
+            return apology("must provide password", 403)
+
+        # Query to select all data from users table
+        query = text("SELECT * FROM users WHERE email = :email") 
+
+        # Fetch the row obtained from the above query
+        result = (connection.execute(query, email=request.form.get("email"))).fetchall()
+
+        # Check password against email
+        if not result or not check_password_hash(result[0]["hash"], request.form.get("password")):
+            return apology("invalid email and/or password", 403)
+
+        # Remember which user has logged in
+        session["user_id"] = result[0]["id"]
+
+        # Save email to the sesssion
+        session["email"] = result[0]["email"]
+
+        # Send the flash message to homepage
+        flash("Welcome!")
+
+        # Redirect user to home page
+        return redirect(url_for("index"))
+
+    # User reached route via GET (as by clicking a link or via redirect)
+    else:
+        return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    """Log user out"""
+
+    # Forget any user_id
+    session.clear()
+
+    # Redirect user to login form
+    return redirect("/")
+
+
+@app.route("/quote", methods=["GET", "POST"])
+@login_required
+def quote():
+    """Get stock quote"""
+
+    if request.method == "POST":
+        symbol = request.form.get("symbol")
+
+        # Check for empty symbol
+        if symbol == "":
+            return apology("missing symbol", 400)
+
+        # Get information for given symbol
+        info = lookup(symbol)
+
+        # Show information
+        if info:
+            return render_template('quote.html', info=info)
+
+        # Notify for invalid symbol
+        else:
+            return apology("invalid symbol", 400)
+
+    # User reached route via GET (as by clicking a link or via redirect)
+    else:
+        return render_template("quote.html")
+
+
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
@@ -114,12 +290,11 @@ def buy():
     # When user submits form
     if request.method == "POST":
 
-        # Check for empty symbol
-        if request.form.get("symbol") == "":
+        if not request.form.get("symbol"):
             return apology("missing symbol", 400)
 
         # Check for empty shares
-        elif request.form.get("shares") == "":
+        elif not request.form.get("shares"):
             return apology("missing shares", 400)
 
         # Check if shares are negative
@@ -211,227 +386,6 @@ def buy():
     return render_template("buy.html")
 
 
-@app.route("/check", methods=["GET"])
-def check():
-    """Return true if username available, else false, in JSON format"""
-
-    if len(request.args.get("username")) >= 3:
-
-        # Query db for username
-        query = text("SELECT id FROM users where username = :username LIMIT 1") 
-        user_row = connection.execute(query, username=request.args.get("username")).fetchall()
-
-        # If username exists
-        if user_row:
-            return jsonify(False)
-
-        # username doesn't exist
-        else:
-            return jsonify(True)
-    else:
-        apology("Username must contain at least three characters", 403)
-
-
-@app.route("/history")
-@login_required
-def history():
-    """Show history of transactions"""
-
-    # Fetch data form db
-    query = text("SELECT * FROM history WHERE userid = :userid ORDER BY date_time DESC") 
-    rows = (connection.execute(query, userid=session["user_id"])).fetchall()
-    
-    local_zone = "Asia/Dhaka"
-
-    # source https://stackoverflow.com/questions/4770297/convert-utc-datetime-string-to-local-datetime
-    from_zone = tz.gettz("UTC")
-    to_zone = tz.gettz(local_zone)
-
-    # Declare an empty list
-    row_list = []
-
-    # If hisoty exists
-    if rows:
-
-        # Convert Resultproxy objetcs into list of dictionaries
-        for row in rows:
-            row_list.append(dict(row))
-        
-        # Travarse all rows for logged in user
-        for row in row_list:
-            
-            # Get information for symbol
-            info = lookup(row["symbol"])
-
-            # Insert required indices into row to display in template
-            row["price"] = info["price"]
-
-            # Get the date_time column
-            utc = row["date_time"]
-
-            # Tell the datetime object that it's in UTC
-            utc = utc.replace(tzinfo=from_zone)
-
-            # Convert to local time
-            local_time = utc.astimezone(to_zone)
-
-            # Format local time
-            formatted_local_time = local_time.strftime("%d-%m-%Y %I:%M:%S %p")
-
-            # Insert into row_list
-            row["transaction_time"] = formatted_local_time
-
-    return render_template("history.html", rows=row_list)
-
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    """Log user in"""
-
-    # Forget any user_id
-    session.clear()
-
-    # User reached route via POST (as by submitting a form via POST)
-    if request.method == "POST":
-
-        # Ensure username was submitted
-        if not request.form.get("username"):
-            return apology("must provide username", 403)
-
-        # Ensure password was submitted
-        elif not request.form.get("password"):
-            return apology("must provide password", 403)
-
-        # Query to select all data from users table
-        query = text("SELECT * FROM users WHERE username = :username") 
-
-        # Fetch the row obtained from the above query
-        result = (connection.execute(query, username=request.form.get('username'))).fetchone()
-
-        # Ensure username exists and password is correct
-        if not result or not check_password_hash(result[2], request.form.get("password")):
-            return apology("invalid username and/or password", 403)
-
-        # Remember which user has logged in
-        session["user_id"] = result[0]
-
-        # Save username to the sesssion
-        session["username"] = request.form.get("username")
-
-        # Send the flash message to homepage
-        flash("Welcome!")
-
-        # Redirect user to home page
-        return redirect(url_for("index"))
-
-    # User reached route via GET (as by clicking a link or via redirect)
-    else:
-        return render_template("login.html")
-
-
-@app.route("/logout")
-def logout():
-    """Log user out"""
-
-    # Forget any user_id
-    session.clear()
-
-    # Redirect user to login form
-    return redirect("/")
-
-
-@app.route("/quote", methods=["GET", "POST"])
-@login_required
-def quote():
-    """Get stock quote"""
-
-    if request.method == "POST":
-        symbol = request.form.get("symbol")
-
-        # Check for empty symbol
-        if symbol == "":
-            return apology("missing symbol", 400)
-
-        # Get information for given symbol
-        info = lookup(symbol)
-
-        # Show information
-        if info:
-            return render_template('quote.html', info=info)
-
-        # Notify for invalid symbol
-        else:
-            return apology("invalid symbol", 400)
-
-    # User reached route via GET (as by clicking a link or via redirect)
-    else:
-        return render_template("quote.html")
-
-
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    """Register user"""
-
-    # Clear any previous session
-    session.clear()
-
-    # User reached route via POST (as by submitting a form via POST)
-    if request.method == "POST":
-
-        # Ensure username was submitted
-        if not request.form.get("username"):
-            return apology("Must provide username", 400)
-
-        # Ensure is username is more than 3 characters
-        if not len(request.form.get("username")) >= 1:
-            return apology("username must be of at least one character!", 400)
-
-        # Ensure password was submitted
-        elif not request.form.get("password"):
-            return apology("Must provide password", 400)
-
-         # Ensure password confirmation was submitted
-        elif not request.form.get("confirmation"):
-            return apology("Must provide password again", 400)
-
-        # Check both passwords
-        if request.form.get("password") != request.form.get("confirmation"):
-            return apology("Passwords mismatched!", 400)
-
-        # Check if username alrady exists
-        query = text("SELECT id FROM users where username = :username LIMIT 1") 
-        result = (connection.execute(query, username=request.form.get('username'))).fetchone()
-
-        # If users exists
-        if result:
-            return apology("Username not available!", 400)
-
-        # Query to insert data into database
-        query = text("INSERT INTO users (username, hash) VALUES (:username, :hash) RETURNING id")
-
-        # Receive the correspondig id
-        rows = (connection.execute(query, username=request.form.get('username'), hash=generate_password_hash(request.form.get('password')))).fetchall()
-        
-        # connection.close()
-
-        # Save user id to the sesssion
-        session["user_id"] = rows[0]["id"]
-        
-        # Save username to the sesssion
-        session["username"] = request.form.get("username")
-
-        # Send the flash message to homepage
-        flash("Congrats!")
-
-        # Redirect user to home page
-        return redirect(url_for("index"))
-
-
-    # User reached route via GET (as by clicking a link or via redirect)
-    else:
-        return render_template("register.html")
-
-
 @app.route("/sell", methods=["GET", "POST"])
 @login_required
 def sell():
@@ -501,6 +455,58 @@ def sell():
         query = text("SELECT symbol FROM transactions WHERE userid = :userid GROUP BY symbol") 
         symbol_rows = (connection.execute(query, userid=session["user_id"])).fetchall()
         return render_template("sell.html", symbol_rows=symbol_rows)
+
+
+@app.route("/history")
+@login_required
+def history():
+    """Show history of transactions"""
+
+    # Fetch data form db
+    query = text("SELECT * FROM history WHERE userid = :userid ORDER BY date_time DESC") 
+    rows = (connection.execute(query, userid=session["user_id"])).fetchall()
+    
+    local_zone = "Asia/Dhaka"
+
+    # source https://stackoverflow.com/questions/4770297/convert-utc-datetime-string-to-local-datetime
+    from_zone = tz.gettz("UTC")
+    to_zone = tz.gettz(local_zone)
+
+    # Declare an empty list
+    row_list = []
+
+    # If hisoty exists
+    if rows:
+
+        # Convert Resultproxy objetcs into list of dictionaries
+        for row in rows:
+            row_list.append(dict(row))
+        
+        # Travarse all rows for logged in user
+        for row in row_list:
+            
+            # Get information for symbol
+            info = lookup(row["symbol"])
+
+            # Insert required indices into row to display in template
+            row["price"] = info["price"]
+
+            # Get the date_time column
+            utc = row["date_time"]
+
+            # Tell the datetime object that it's in UTC
+            utc = utc.replace(tzinfo=from_zone)
+
+            # Convert to local time
+            local_time = utc.astimezone(to_zone)
+
+            # Format local time
+            formatted_local_time = local_time.strftime("%d-%m-%Y %I:%M:%S %p")
+
+            # Insert into row_list
+            row["transaction_time"] = formatted_local_time
+
+    return render_template("history.html", rows=row_list)
 
 
 @app.route("/faq")
