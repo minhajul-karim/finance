@@ -12,7 +12,7 @@ from dateutil import tz
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 
-from helpers import apology, login_required, lookup, usd
+from helpers import apology, login_required, lookup, usd, sorry
 
 database_file = "postgres://faoqgogsskzcek:795a7c81e2e6c3cdc7634e7e71a2c39acc0238ceae5efa9644c76ab0b257f97c@ec2-174-129-227-146.compute-1.amazonaws.com:5432/ddf9frqo66ole3"
 
@@ -136,34 +136,30 @@ def register():
 
         # Ensure Email was submitted
         if not request.form.get("email"):
-            return apology("Must provide email", 400)
+            # return render_template("error.html", code=400, text="you must provide an email address")
+            return sorry("you must provide an email address")
 
         # Ensure if email is valid
         elif not (re.search(r"(^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$)", 
                   request.form.get("email"))):
-            return apology("Must provide valid email", 400)
+            return sorry("you must provide a valid email")
 
         # Ensure password was submitted
         elif not request.form.get("password"):
-            return apology("Must provide password", 400)
+            return sorry("you must provide a password")
 
         # Ensure password meets conditions
-        elif not (re.search(r"[A-Z]+", request.form.get("password"))):
-            return apology("Password must contain one capital letter");
-
-        elif not (re.search(r"[0-9]+", request.form.get("password"))):
-            return apology("Password must contain one digit");
-
-        elif not (re.search(r"\W", request.form.get("password"))):
-            return apology("Password must contain one special character");
+        elif not (re.search(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{5,})",
+                            request.form.get("password"))):
+            return sorry("password must contain at least 5 characters containing at least a uppercase, a digit, & a special character")
 
          # Ensure password confirmation was submitted
         elif not request.form.get("confirmation"):
-            return apology("Must provide password again", 400)
+            return sorry("you must provide password again")
 
         # Check both passwords
         if request.form.get("password") != request.form.get("confirmation"):
-            return apology("Passwords mismatched!", 400)
+            return sorry("passwords mismatched")
 
         # Check if email alrady exists
         query = text("SELECT id FROM users where email = :email LIMIT 1") 
@@ -171,7 +167,7 @@ def register():
 
         # If users exists
         if result:
-            return apology("Email is not available!", 400)
+            return sorry("someone's already using that email")
 
         # Query to insert data into database
         query = text("INSERT INTO users (hash, email) VALUES (:hash, :email) RETURNING id")
@@ -184,7 +180,7 @@ def register():
         session["user_id"] = rows[0]["id"]
         
         # Save email to the sesssion
-        session["email"] = request.form.get("username")
+        session["email"] = request.form.get("email")
 
         # Send the flash message to homepage
         flash("Congrats!")
@@ -210,11 +206,11 @@ def login():
 
         # Ensure username was submitted
         if not request.form.get("email"):
-            return apology("must provide email", 403)
+            return sorry("you must provide email")
 
         # Ensure password was submitted
         elif not request.form.get("password"):
-            return apology("must provide password", 403)
+            return sorry("you must provide password")
 
         # Query to select all data from users table
         query = text("SELECT * FROM users WHERE email = :email") 
@@ -224,7 +220,7 @@ def login():
 
         # Check password against email
         if not result or not check_password_hash(result[0]["hash"], request.form.get("password")):
-            return apology("invalid email and/or password", 403)
+            return sorry("your email or password or both are incorrenct")
 
         # Remember which user has logged in
         session["user_id"] = result[0]["id"]
@@ -264,7 +260,7 @@ def quote():
 
         # Check for empty symbol
         if symbol == "":
-            return apology("missing symbol", 400)
+            return sorry("missing symbol", 400)
 
         # Get information for given symbol
         info = lookup(symbol)
@@ -275,7 +271,7 @@ def quote():
 
         # Notify for invalid symbol
         else:
-            return apology("invalid symbol", 400)
+            return sorry("invalid symbol")
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
@@ -291,23 +287,23 @@ def buy():
     if request.method == "POST":
 
         if not request.form.get("symbol"):
-            return apology("missing symbol", 400)
+            return sorry("symbol is missing")
 
         # Check for empty shares
         elif not request.form.get("shares"):
-            return apology("missing shares", 400)
+            return sorry("shares are missing")
 
         # Check if shares are negative
         elif request.form.get("shares")[0] == "-":
-            return apology("Shares must not negative", 400)
+            return sorry("shares must not be negative", 400)
 
         # Check if shares are float
         elif not request.form.get("shares").replace(".", "", 1).isdigit():
-            return apology("Shares must not be fractional", 400)
+            return sorry("shares must not be fractional", 400)
 
         # Check if shares are non-numeric
         elif not request.form.get("shares").isdigit():
-            return apology("Shares must be numeric", 400)
+            return sorry("shares must be numeric", 400)
 
         # Get data for given symbol
         info = lookup(request.form.get("symbol"))
@@ -325,7 +321,7 @@ def buy():
 
             # Check user's affordability
             if new_cost > current_balance:
-                return apology("Not enough cash", 400)
+                return sorry("you don't have enough cash")
 
             # Check if user has purchased same stock before
             query = text("SELECT * FROM transactions WHERE userid = :userid AND symbol = :symbol")
@@ -374,13 +370,13 @@ def buy():
 
         # Notify user for invalid symbol
         else:
-            return apology("invalid symbol", 400)
+            return sorry("invalid symbol")
 
         # Send the flash message to homepage
         flash("Congrats! You've successfully bought!")
 
         # Redirect to homepage
-        return redirect(url_for("index"))
+        return redirect("/")
 
     # If user clicks the buy button
     return render_template("buy.html")
@@ -396,11 +392,11 @@ def sell():
         
         # Check for empty stock
         if not request.form.get("symbol"):
-            return apology("Must provide symbol", 400)
+            return sorry("you must provide a symbol")
 
         # Check for empty shares
         elif not request.form.get("shares"):
-            return apology("Must provide number of shares", 400)
+            return sorry("you must provide number of shares")
 
         # Number of shares of a stock
         query = text("SELECT shares FROM transactions WHERE userid = :userid AND symbol = :symbol") 
@@ -408,7 +404,7 @@ def sell():
 
         # Restrict user from selling more shares than s/he has
         if int(request.form.get("shares")) > result[0]["shares"]:
-            return apology("Don't have enough shares", 400)
+            return sorry("you don't have enough shares to sell", 400)
 
         # Get information about this stock
         info = lookup(request.form.get("symbol"))
@@ -540,12 +536,18 @@ def sellthis():
 
     return render_template("sell_this.html", symbol=session["symbol"])
 
+@app.route("/error")
+def error():
+    """Sell shares of specific stock"""
+
+    return render_template("error.html")
+
 def errorhandler(e):
     """Handle error"""
 
     if not isinstance(e, HTTPException):
         e = InternalServerError()
-    return apology(e.name, e.code)
+    return sorry("something is broken, but its not you, its us! Please consider reloading..", e.code)
 
 
 # Listen for errors

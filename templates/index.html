@@ -19,9 +19,10 @@
       </tr>
     </thead>
 
-    <tfoot class="to_be_hidden">
+    <tfoot id="bottom_row">
       <tr>
-        <td colspan="4"></td>
+        <td>Grand total</td>
+        <td colspan="3"></td>
         <td>{{ grand_total | usd }}</td>
         <td></td>
       </tr>
@@ -31,27 +32,27 @@
       {% for row in rows %}
         <tr>
           <td class="symbol_row">
-            <span class="instruction">Symbol:</span>&nbsp;
+            <span class="col_prefix">Symbol:</span>&nbsp;
             <span class="symbol">{{ row["symbol"] }}</span>
           </td>
-          <td><span class="instruction">Name: </span>&nbsp;{{ row["name"] }}</td>
-          <td><span class="instruction">Shares: </span>&nbsp;{{ row["shares"] }}</td>
-          <td><span class="instruction">Price: </span>&nbsp;{{ row["price"] | usd }}</td>
-          <td><span class="instruction">Total: </span>&nbsp;{{ row["total"] | usd }}</td>
+          <td><span class="col_prefix">Name: </span>&nbsp;{{ row["name"] }}</td>
+          <td><span class="col_prefix">Shares: </span>&nbsp;{{ row["shares"] }}</td>
+          <td><span class="col_prefix">Price: </span>&nbsp;{{ row["price"] | usd }}</td>
+          <td><span class="col_prefix">Total: </span>&nbsp;{{ row["total"] | usd }}</td>
           <td>
             <button type="button" class="btn btn-primary buy_button" name="buy_button">Buy</button>
             <button type="button" class="btn btn-primary sell_button" name="sell_button">Sell</button>
           </td>
         </tr>
       {% endfor %}
-      <tr class="to_be_hidden">
-        <td>CASH</td>
+      <tr id="cash">
+        <td>Remaining cash</td>
         <td colspan="3"></td>
         <td>{{ current_cash | usd }}</td>
         <td></td>
       </tr>
-      <tr class="bottom_tr">
-        <td>CASH: {{ current_cash | usd }}</td>
+      <tr id="cash_small">
+        <td>Remaining cash: {{ current_cash | usd }}</td>
         <td>Grand Total: {{ grand_total | usd }}</td>
       </tr>
     </tbody>

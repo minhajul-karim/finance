@@ -13,16 +13,16 @@
           <th scope="col">Symbol</th>
           <th scope="col">Shares</th>
           <th scope="col">Price</th>
-          <th scope="col">Transacted</th>
+          <th scope="col">Transaction time</th>
         </tr>
       </thead>
       <tbody>
         {% for row in rows %}
         <tr>
-          <td><span class="instruction">Symbol:</span>&nbsp;{{ row["symbol"] }}</td>
-          <td><span class="instruction">Shares:</span>&nbsp;{{ row["shares"] }}</td>
-          <td><span class="instruction">Price:</span>&nbsp;{{ row["price"] | usd }}</td>
-          <td><span class="instruction">Transacted:</span>&nbsp;{{ row["transaction_time"] }}</td>
+          <td><span class="col_prefix">Symbol:</span>&nbsp;{{ row["symbol"] }}</td>
+          <td><span class="col_prefix">Shares:</span>&nbsp;{{ row["shares"] }}</td>
+          <td><span class="col_prefix">Price:</span>&nbsp;{{ row["price"] | usd }}</td>
+          <td><span class="col_prefix">Transaction time:</span>&nbsp;{{ row["transaction_time"] }}</td>
         </tr>
       {% endfor %}
       </tbody>

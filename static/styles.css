@@ -1,38 +1,47 @@
+/****** Header ******/
 
-nav .navbar-brand
-{
+nav .navbar-brand {
     /* size for brand */
     font-size: xx-large;
 }
 
 /* colors for brand */
-nav .navbar-brand .blue
-{
+nav .navbar-brand .blue {
     color: #537fbe;
 }
-nav .navbar-brand .red
-{
+nav .navbar-brand .red {
     color: #ea433b;
 }
-nav .navbar-brand .yellow
-{
+nav .navbar-brand .yellow {
     color: #f5b82e;
 }
-nav .navbar-brand .green
-{
+nav .navbar-brand .green {
     color: #2e944b;
 }
-nav .navbar-brand .orange
-{
+nav .navbar-brand .orange {
     color: #FFA500;
 }
-nav .navbar-brand .white
-{
+nav .navbar-brand .white {
     color: #FFFFFF;
 }
 
-main .form-control
-{
+#navbar a:hover {
+    color: #E74C3C !important;
+}
+
+a {
+    color: #E74C3C;
+}
+
+a:hover {
+    text-decoration: none;
+    color: #999999;
+}
+
+/***** Main area ******/
+
+main .form-control {
+
     /* center form controls */
     display: inline-block;
 
@@ -40,8 +49,8 @@ main .form-control
     width: auto;
 }
 
-main
-{
+main {
+
     /* scroll horizontally as needed */
     overflow-x: auto;
 
@@ -49,7 +58,7 @@ main
     text-align: center;
 }
 
-main img
+main img 
 {
     /* constrain images on small screens */
     max-width: 100%;
@@ -59,34 +68,17 @@ main img
     text-align: left !important;
 }
 
-#registration-area .form-control
-{
+#registration-area .form-control {
     width: 300px;
 }
 
-a
-{
-    color: #E74C3C;
-}
-
-a:hover
-{
-    text-decoration: none;
-    color: #999999;
-}
-
-#navbar a:hover
-{
-    color: #E74C3C !important;
-}
-
-.instruction
-{
+/*Column header of index page table for smaller screens*/
+.col_prefix {
     display: none;
 }
 
-.bottom_tr
-{
+/*current cash overview for smaller screens*/
+#cash_small {
     display: none;
 }
 
@@ -96,35 +88,30 @@ a:hover
 #login_form label,
 #quote_form label,
 #buy_form label,
-#sell_form label
-{
+#sell_form label {
     display: block;
     color: red;
     font-size: 13px;
 }
 
-#login_form
-{
+#login_form {
     margin-left: 80px;
 }
 
-.notAvailable {
+#emailNotAvailable {
     color: red;
     font-size: 13px;
 }
 
 /*Forgot password anchor*/
-#forget-password
-{
+#forget-password {
     display: block;
     margin: 10px 0;
 }
 
-/*Style for Darkly*/
 
-/*Change top navigation bg color of homepage*/
-.bg-light.navbar
-{
+/***** Change top navigation bg color of homepage ******/
+.bg-light.navbar {
     background-color: #999999 !important;
 }
 
@@ -133,75 +120,87 @@ a:hover
     border: 0 !important;
 }
 
-#faq-area
-{
+#faq-area {
     text-align: left !important;
+}
+
+/*Error page*/
+.error-template {
+    padding: 40px 15px;
+    text-align: center;
+}
+
+.error-actions {
+    margin-top:15px;
+    margin-bottom:15px;
+}
+
+.error-actions .btn {
+    margin-right:10px;
 }
 
 /*Responsive Portfolio Table*/
 
-@media all and (max-width: 800px)
-{
-    thead
-    {
+@media all and (max-width: 800px) {
+    
+    thead {
         display: none;
     }
 
-    tr
-    {
+    tr {
         border-bottom: 20px solid #375a7f;
     }
 
-    td
-    {
+    td {
         display: block;
         widows: 100%;
         text-align: left;
     }
 
-    .instruction
-    {
+    .col_prefix {
         float: left;
         display: block;
     }
 
-    .to_be_hidden
-    {
+    #cash {
         display: none;
     }
 
-    .bottom_tr
-    {
-        display: block;
+    #bottom_row {
+        display: none;
     }
 
-    #reg_form
-    {
+    #reg_form {
         margin-left: 0;
     }
 }
 
 @media all and (max-width: 768px)
 {
-    #login-faq
-    {
+    #login-faq {
         display: none;
     }
 
-    #login_form
-    {
+    #login_form {
         margin-left: 0;
     }
 
-    #login-area
-    {
+    #login-area {
         text-align: center !important;
+    }
+
+    /*Home table*/
+    .col_prefix {
+        display: block;
+    }
+
+    #cash_small {
+        display: block;
     }
 } 
 
 @media all and (max-width: 460px){
-    .p-5
-    {
+    .p-5 {
         padding: 10px !important;
     }
 }

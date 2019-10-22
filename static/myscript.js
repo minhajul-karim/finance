@@ -1,5 +1,3 @@
-// When the page is loaded
-
 $(document).ready(function() {
 
 	/************* Registration form validation ***********/
@@ -69,15 +67,17 @@ $(document).ready(function() {
 				success: function(data) {
 
 					if (data) {
+						
+						// email is available
+						$("#email_group p").html("").removeAttr("id");
+
 						// Submit the form
-						$("#availability").html("");
-						$("#availability").removeClass("notAvailable");
 						form.submit();
 					}
 
 					else {
 						// Notify user that username is not available
-						$("#availability").html("Someone is already using that email").addClass("notAvailable");
+						$("#email_group p").html("Someone is already using that email").attr("id", "emailNotAvailable");
 					}
 				}
 
@@ -270,7 +270,7 @@ $(document).ready(function() {
 
 	// Remove username availability error message
 	$("#mail").on("click", function(){
-		$("#availability").html("");
+		$("#email_group p").html("");
 	});
 
 });
