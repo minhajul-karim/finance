@@ -38,7 +38,6 @@ def after_request(response):
     response.headers["Pragma"] = "no-cache"
     return response
 
-
 # Custom filter
 app.jinja_env.filters["usd"] = usd
 
@@ -187,7 +186,6 @@ def register():
 
         # Redirect user to home page
         return redirect(url_for("index"))
-
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
