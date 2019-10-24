@@ -94,10 +94,6 @@ main img
     font-size: 13px;
 }
 
-#login_form {
-    margin-left: 80px;
-}
-
 #emailNotAvailable {
     color: red;
     font-size: 13px;
@@ -135,14 +131,45 @@ main img
     margin-bottom:15px;
 }
 
+.error-actions i {
+    margin-right: 8px;
+}
+
 .error-actions .btn {
     margin-right:10px;
 }
 
 /*Responsive Portfolio Table*/
 
-@media all and (max-width: 800px) {
-    
+@media all and (max-width: 900px) {
+
+    .p-5 {
+        padding: 1rem !important;
+    }
+
+    .w-75 {
+        width: 100% !important;
+    }
+}
+
+
+@media all and (max-width: 650px) {
+
+    #login-faq {
+        display: none;
+    }
+
+    #login-area {
+        text-align: center !important;
+    }
+
+    .col-sm-5 {
+        -webkit-box-flex: 0;
+        -ms-flex: 0 0 41.6666666667%;
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
     thead {
         display: none;
     }
@@ -172,35 +199,20 @@ main img
 
     #reg_form {
         margin-left: 0;
-    }
+    }        
 }
 
-@media all and (max-width: 768px)
-{
-    #login-faq {
-        display: none;
+@media all and (max-width: 460px) {
+    
+    .error-actions a {
+        margin-bottom: 10px !important;
     }
 
-    #login_form {
-        margin-left: 0;
+    .error-template {
+        padding: 0;
     }
-
-    #login-area {
-        text-align: center !important;
-    }
-
-    /*Home table*/
-    .col_prefix {
-        display: block;
-    }
-
-    #cash_small {
-        display: block;
-    }
-} 
-
-@media all and (max-width: 460px){
-    .p-5 {
-        padding: 10px !important;
+    
+    .btn-lg, .btn-group-lg > .btn {
+        margin-bottom: 15px;
     }
 }
