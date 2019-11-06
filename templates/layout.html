@@ -40,7 +40,7 @@
                         <li class="nav-item"><a class="nav-link" href="/faq">FAQ</a></li>
                     </ul>
                     <ul class="navbar-nav ml-auto mt-2">
-                        <li class="nav-item"><a class="nav-link" href="/logout">{{ session.email }} - Log Out</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/logout">{{ session.fname }} - Log Out</a></li>
                     </ul>
                 {% else %}
                     <ul class="navbar-nav ml-auto mt-2">
@@ -87,7 +87,7 @@
                 jqueryFormElement.src = "/static/jquery_form.js";
 
                 const myscriptElement = document.createElement("script");
-                myscriptElement.src = "/static/myscript1.js";
+                myscriptElement.src = "/static/myscript.js";
 
                 document.body.appendChild(popperElement);
                 document.body.appendChild(bootstrapJsElement);

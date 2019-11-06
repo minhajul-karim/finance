@@ -273,4 +273,9 @@ $(document).ready(function() {
 		$("#email_group p").html("");
 	});
 
+	// Alert on Resend page
+	$("#resend-area button[type='submit']").on("click", function(){
+		alert("We've sent another email. Please check your inbox.")
+	});
+
 });

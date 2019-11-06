@@ -139,6 +139,26 @@ main img
     margin-right:10px;
 }
 
+/*Reset password*/
+#reset_area .form-control {
+    width: 250px;
+}
+
+/*Resend area*/
+
+#resend-area .alert {
+    display: none;
+    /*visibility: hidden;*/
+}
+
+#resend-area input[type="email"] {
+    display: none;
+}
+
+#resend-actions .btn {
+    margin-right:10px;
+}
+
 /*Responsive Portfolio Table*/
 
 @media all and (max-width: 900px) {

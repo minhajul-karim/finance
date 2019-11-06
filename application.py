@@ -1,5 +1,6 @@
 import os
 import re
+import secrets
 
 from cs50 import SQL
 from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
@@ -7,10 +8,11 @@ from flask_session import Session
 from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from dateutil import tz
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
+from flask_mail import Mail, Message
 
 from helpers import apology, login_required, lookup, usd, sorry
 
@@ -24,6 +26,14 @@ app.secret_key = "�#�-ާg'���3RCw"
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.config["SQLALCHEMY_DATABASE_URI"] = database_file
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Email settings
+app.config["MAIL_SERVER"] = "smtp.gmail.com"
+app.config["MAIL_PORT"] = 465
+app.config["MAIL_USE_SSL"] = True
+app.config["MAIL_USERNAME"] = "minhajul.kaarim@gmail.com"
+app.config["MAIL_PASSWORD"] = "minhajul9898372"
+mail = Mail(app)
 
 db = SQLAlchemy(app)
 
@@ -133,19 +143,26 @@ def register():
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
+        # Ensure first name was submitted
+        if not request.form.get("first_name"):
+            return sorry("please provide your first name")        
+
+        # Ensure last name was submitted
+        if not request.form.get("last_name"):
+            return sorry("please provide your last name")
+
         # Ensure Email was submitted
         if not request.form.get("email"):
-            # return render_template("error.html", code=400, text="you must provide an email address")
-            return sorry("you must provide an email address")
+            return sorry("please provide an email address")
 
         # Ensure if email is valid
         elif not (re.search(r"(^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$)", 
                   request.form.get("email"))):
-            return sorry("you must provide a valid email")
+            return sorry("please provide a valid email address")
 
         # Ensure password was submitted
         elif not request.form.get("password"):
-            return sorry("you must provide a password")
+            return sorry("please provide a password")
 
         # Ensure password meets conditions
         elif not (re.search(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{5,})",
@@ -154,7 +171,7 @@ def register():
 
          # Ensure password confirmation was submitted
         elif not request.form.get("confirmation"):
-            return sorry("you must provide password again")
+            return sorry("please provide password again")
 
         # Check both passwords
         if request.form.get("password") != request.form.get("confirmation"):
@@ -169,17 +186,18 @@ def register():
             return sorry("someone's already using that email")
 
         # Query to insert data into database
-        query = text("INSERT INTO users (hash, email) VALUES (:hash, :email) RETURNING id")
+        query = text("INSERT INTO users (hash, email, first_name, last_name) VALUES (:hash, :email, :first_name, :last_name) RETURNING id")
 
         # Receive the correspondig id
         rows = (connection.execute(query, hash=generate_password_hash(request.form.get('password')), 
-                email=request.form.get("email"))).fetchall()
+                                    email=request.form.get("email"), first_name=request.form.get("first_name"), 
+                                    last_name=request.form.get("last_name"))).fetchall()
 
         # Save user id to the sesssion
         session["user_id"] = rows[0]["id"]
         
         # Save email to the sesssion
-        session["email"] = request.form.get("email")
+        session["fname"] = request.form.get("first_name")
 
         # Send the flash message to homepage
         flash("Congrats!")
@@ -204,11 +222,11 @@ def login():
 
         # Ensure username was submitted
         if not request.form.get("email"):
-            return sorry("you must provide email")
+            return sorry("please provide email")
 
         # Ensure password was submitted
         elif not request.form.get("password"):
-            return sorry("you must provide password")
+            return sorry("please provide password")
 
         # Query to select all data from users table
         query = text("SELECT * FROM users WHERE email = :email") 
@@ -390,11 +408,11 @@ def sell():
         
         # Check for empty stock
         if not request.form.get("symbol"):
-            return sorry("you must provide a symbol")
+            return sorry("please provide a symbol")
 
         # Check for empty shares
         elif not request.form.get("shares"):
-            return sorry("you must provide number of shares")
+            return sorry("please provide number of shares")
 
         # Number of shares of a stock
         query = text("SELECT shares FROM transactions WHERE userid = :userid AND symbol = :symbol") 
@@ -505,9 +523,79 @@ def history():
 
 @app.route("/faq")
 def faq():
+    """ Returns the FAQ page """
+
     return render_template("faq.html")
 
 
+@app.route("/forgot_password")
+def forgot_password():
+    """ Returns the password reset page """
+
+    return render_template("reset.html")
+
+
+@app.route("/password_reset", methods=["POST"])
+def password_reset():
+    """ Comments to be added """
+
+    if request.method == "POST":
+
+        # Ensure Email was submitted
+        if not request.form.get("email"):
+            return sorry("please provide an email address")
+
+         # Query db for email
+        query = text("SELECT * FROM users where email = :email LIMIT 1") 
+        result = (connection.execute(query, email=request.form.get("email"))).fetchall()
+
+        # if email exists
+        if result:
+            
+            # Current time
+            currentTime = datetime.utcnow()
+
+            # Create expire time with adding 24 hours to current time
+            expireTime = currentTime + timedelta(hours=24)
+
+            # Generate 32 byte token
+            token32 = secrets.token_urlsafe(32)
+
+            # Generate reset password link
+            action_url = "http://127.0.0.1:5000/test?token=" + token32
+
+            # Save into db
+            query = text("INSERT INTO password_reset (id, token, expiration_time) VALUES (:id, :token, :expiration_time)")
+            connection.execute(query, id=result[0]["id"], token=token32, expiration_time=expireTime)
+
+            # Send mail
+            try:
+                msg = Message("Reset Password", sender="minhajul.kaarim@gmail.com", 
+                              recipients=[request.form.get("email")])
+                msg.html = render_template("reset_password_1.html", name=result[0]["first_name"], 
+                                            action_url=action_url)
+                mail.send(msg)
+                return render_template("resend.html", email=request.form.get("email"))
+
+            except:
+                return sorry("something is broken! Please consider reloading.", 500)
+        else:
+            
+            try:
+                msg = Message("Request For Reset Password", sender="minhajul.kaarim@gmail.com", 
+                              recipients=[request.form.get("email")])
+                msg.html = render_template("reset_password_2.html", email_address=request.form.get("email"), 
+                                            action_url="http://127.0.0.1:5000/forgot_password", 
+                                            support_url="mailto:minhajul.kaarim@gmail.com")
+                mail.send(msg)
+                return render_template("resend.html", email=request.form.get("email"))
+
+            except:
+                return sorry("something is broken! Please consider reloading.", 500)
+
+    return sorry("something is broken! Please consider reloading.", 500)
+
+    
 @app.route("/save_symbol_in_session", methods=["GET"])
 def save_symbol_in_session():
     """ Save the symbol into session """
@@ -522,11 +610,13 @@ def save_symbol_in_session():
     else:
         return jsonify(False)
 
+
 @app.route("/buythis", methods=["GET"])
 def buythis():
     """Buy shares of specific stock"""
 
     return render_template("buy_this.html", symbol=session["symbol"])
+
 
 @app.route("/sellthis", methods=["GET"])
 def sellthis():
@@ -534,18 +624,25 @@ def sellthis():
 
     return render_template("sell_this.html", symbol=session["symbol"])
 
+
 @app.route("/error")
 def error():
     """Sell shares of specific stock"""
 
     return render_template("error.html")
 
+@app.route("/test", methods=["GET"])
+def test():
+    token = request.args.get("token")
+    return token
+
+
 def errorhandler(e):
     """Handle error"""
 
     if not isinstance(e, HTTPException):
         e = InternalServerError()
-    return sorry("something is broken, but its not you, its us! Please consider reloading..", e.code)
+    return sorry("something is broken! Please consider reloading.", e.code)
 
 
 # Listen for errors
