@@ -562,7 +562,7 @@ def password_reset():
             token32 = secrets.token_urlsafe(32)
 
             # Generate reset password link
-            action_url = "http://127.0.0.1:5000/test?token=" + token32
+            action_url = "https://finance-stocks.herokuapp.com/req_to_change_password?token=" + token32
 
             # Save into db
             query = text("INSERT INTO password_reset (id, token, expiration_time) VALUES (:id, :token, :expiration_time)")
@@ -585,7 +585,7 @@ def password_reset():
                 msg = Message("Request For Reset Password", sender="minhajul.kaarim@gmail.com", 
                               recipients=[request.form.get("email")])
                 msg.html = render_template("reset_password_2.html", email_address=request.form.get("email"), 
-                                            action_url="http://127.0.0.1:5000/forgot_password", 
+                                            action_url="https://finance-stocks.herokuapp.com/forgot_password", 
                                             support_url="mailto:minhajul.kaarim@gmail.com")
                 mail.send(msg)
                 return render_template("resend.html", email=request.form.get("email"))
@@ -631,7 +631,7 @@ def error():
 
     return render_template("error.html")
 
-@app.route("/test", methods=["GET"])
+@app.route("/req_to_change_password", methods=["GET"])
 def test():
     token = request.args.get("token")
     return token
