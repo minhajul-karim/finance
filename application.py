@@ -242,7 +242,7 @@ def login():
         session["user_id"] = result[0]["id"]
 
         # Save email to the sesssion
-        session["email"] = result[0]["email"]
+        session["fname"] = result[0]["first_name"]
 
         # Send the flash message to homepage
         flash("Welcome!")
