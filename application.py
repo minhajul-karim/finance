@@ -578,7 +578,7 @@ def password_reset():
                 return render_template("resend.html", email=request.form.get("email"))
 
             except:
-                return sorry("something is broken! Please consider reloading.", 500)
+                return sorry("we could not send the mail to you though we've found you. Please relaod or request again", 500)
         else:
             
             try:
@@ -591,9 +591,9 @@ def password_reset():
                 return render_template("resend.html", email=request.form.get("email"))
 
             except:
-                return sorry("something is broken! Please consider reloading.", 500)
+                return sorry("we could not send the mail to you. Please relaod or request again", 500)
 
-    return sorry("something is broken! Please consider reloading.", 500)
+    return sorry("we could not submit your request. Please submit again", 500)
 
     
 @app.route("/save_symbol_in_session", methods=["GET"])
