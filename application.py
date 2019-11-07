@@ -31,7 +31,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 465
 app.config["MAIL_USE_SSL"] = True
-app.config["MAIL_USERNAME"] = "minhajul.kaarim@gmail.com"
+app.config["MAIL_USERNAME"] = "finance50.bd@gmail.com"
 app.config["MAIL_PASSWORD"] = "minhajul9898372"
 mail = Mail(app)
 
@@ -570,7 +570,7 @@ def password_reset():
 
             # Send mail
             try:
-                msg = Message("Reset Password", sender="minhajul.kaarim@gmail.com", 
+                msg = Message("Reset Password", sender="finance50.bd@gmail.com", 
                               recipients=[request.form.get("email")])
                 msg.html = render_template("reset_password_1.html", name=result[0]["first_name"], 
                                             action_url=action_url)
@@ -578,11 +578,11 @@ def password_reset():
                 return render_template("resend.html", email=request.form.get("email"))
 
             except:
-                return sorry("we could not send the mail to you though we've found you. Please relaod or request again", 500)
+                return sorry("we could not send the mail to you. Please relaod or request again", 500)
         else:
             
             try:
-                msg = Message("Request For Reset Password", sender="minhajul.kaarim@gmail.com", 
+                msg = Message("Request For Reset Password", sender="finance50.bd@gmail.com", 
                               recipients=[request.form.get("email")])
                 msg.html = render_template("reset_password_2.html", email_address=request.form.get("email"), 
                                             action_url="https://finance-stocks.herokuapp.com/forgot_password", 
