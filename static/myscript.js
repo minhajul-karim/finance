@@ -7,6 +7,14 @@ $(document).ready(function() {
 		// Define rules
 		rules: {
 
+			first_name: {
+				required: true
+			},
+
+			last_name: {
+				required: true
+			},
+
 			email: {
 				required: true,
 				validEmail: true
@@ -29,6 +37,14 @@ $(document).ready(function() {
 
 		// Error Messages
 		messages: {
+
+			first_name: {
+				required: "Please enter your first name"
+			},
+
+			last_name: {
+				required: "Please enter your last name"
+			},
 
 			email: {
 				required: "Pleaase enter a valid email address",

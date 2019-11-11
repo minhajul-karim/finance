@@ -545,8 +545,8 @@ def password_reset():
         if not request.form.get("email"):
             return sorry("please provide an email address")
 
-         # Query db for email
-        query = text("SELECT * FROM users where email = :email LIMIT 1") 
+        # Query db for email
+        query = text("SELECT * FROM users where email = :email") 
         result = (connection.execute(query, email=request.form.get("email"))).fetchall()
 
         # if email exists
@@ -564,9 +564,18 @@ def password_reset():
             # Generate reset password link
             action_url = "https://finance-stocks.herokuapp.com/req_to_change_password?token=" + token32
 
-            # Save into db
-            query = text("INSERT INTO password_reset (id, token, expiration_time) VALUES (:id, :token, :expiration_time)")
-            connection.execute(query, id=result[0]["id"], token=token32, expiration_time=expireTime)
+            # Check if prev token exists
+            query = text("SELECT * FROM password_reset WHERE id = :id")
+            tokenExists = connection.execute(query, id=result[0]["id"]).fetchall()
+
+            # If yes, update the prev one with the current token
+            if tokenExists:
+                query = text("UPDATE password_reset SET token = :token AND expiration_time = :expiration_time WHERE id = :id")
+                connection.execute(query, token=token32, expiration_time=expireTime, id=result[0]["id"])
+
+            else:
+                query = text("INSERT INTO password_reset (id, token, expiration_time) VALUES (:id, :token, :expiration_time)")
+                connection.execute(query, id=result[0]["id"], token=token32, expiration_time=expireTime)
 
             # Send mail
             try:
@@ -634,6 +643,10 @@ def error():
 @app.route("/req_to_change_password", methods=["GET"])
 def test():
     token = request.args.get("token")
+
+    # Search DB for token
+    query = text("SELECT * FROM users where email = :email LIMIT 1") 
+    result = (connection.execute(query, email=request.form.get("email"))).fetchall()
     return token
 
 
