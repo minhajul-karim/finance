@@ -570,9 +570,8 @@ def password_reset():
 
             # If yes, update the prev one with the current token
             if tokenExists:
-                query = text("UPDATE password_reset SET token = :token AND expiration_time = :expiration_time WHERE id = :id")
+                query = text("UPDATE password_reset SET token = :token, expiration_time = :expiration_time WHERE id = :id")
                 connection.execute(query, token=token32, expiration_time=expireTime, id=result[0]["id"])
-
             else:
                 query = text("INSERT INTO password_reset (id, token, expiration_time) VALUES (:id, :token, :expiration_time)")
                 connection.execute(query, id=result[0]["id"], token=token32, expiration_time=expireTime)
@@ -581,7 +580,7 @@ def password_reset():
             try:
                 msg = Message("Reset Password", sender="finance50.bd@gmail.com", 
                               recipients=[request.form.get("email")])
-                msg.html = render_template("reset_password_1.html", name=result[0]["first_name"], 
+                msg.html = render_template("MAIL_for_registered_users.html", name=result[0]["first_name"], 
                                             action_url=action_url)
                 mail.send(msg)
                 return render_template("resend.html", email=request.form.get("email"))
@@ -593,7 +592,7 @@ def password_reset():
             try:
                 msg = Message("Request For Reset Password", sender="finance50.bd@gmail.com", 
                               recipients=[request.form.get("email")])
-                msg.html = render_template("reset_password_2.html", email_address=request.form.get("email"), 
+                msg.html = render_template("MAIL_for_unregistered_users.html", email_address=request.form.get("email"), 
                                             action_url="https://finance-stocks.herokuapp.com/forgot_password", 
                                             support_url="mailto:minhajul.kaarim@gmail.com")
                 mail.send(msg)
