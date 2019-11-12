@@ -16,11 +16,11 @@ from flask_mail import Mail, Message
 
 from helpers import apology, login_required, lookup, usd, sorry
 
-database_file = "postgres://faoqgogsskzcek:795a7c81e2e6c3cdc7634e7e71a2c39acc0238ceae5efa9644c76ab0b257f97c@ec2-174-129-227-146.compute-1.amazonaws.com:5432/ddf9frqo66ole3"
+database_file = os.environ.get("DATABASE_URL")
 
 # Configure application
 app = Flask(__name__)
-app.secret_key = "�#�-ާg'���3RCw"
+app.secret_key = os.environ.get("APP_SECRET_KEY")
 
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -31,8 +31,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 465
 app.config["MAIL_USE_SSL"] = True
-app.config["MAIL_USERNAME"] = "finance50.bd@gmail.com"
-app.config["MAIL_PASSWORD"] = "minhajul9898372"
+app.config["MAIL_USERNAME"] = os.environ.get("MAIL_ID")
+app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASS")
 mail = Mail(app)
 
 db = SQLAlchemy(app)
@@ -568,7 +568,7 @@ def password_reset():
             query = text("SELECT * FROM password_reset WHERE id = :id")
             tokenExists = connection.execute(query, id=result[0]["id"]).fetchall()
 
-            # If yes, update the prev one with the current token
+            # If token exists, update the prev one with the current token
             if tokenExists:
                 query = text("UPDATE password_reset SET token = :token, expiration_time = :expiration_time WHERE id = :id")
                 connection.execute(query, token=token32, expiration_time=expireTime, id=result[0]["id"])
