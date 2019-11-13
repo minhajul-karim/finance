@@ -88,7 +88,8 @@ main img
 #login_form label,
 #quote_form label,
 #buy_form label,
-#sell_form label {
+#sell_form label,
+#update_password_area label {
     display: block;
     color: red;
     font-size: 13px;
@@ -157,6 +158,11 @@ main img
 
 #resend-actions .btn {
     margin-right:10px;
+}
+
+/*Update password page*/
+#update_password_area input[type="email"] {
+    display: none;
 }
 
 /*Responsive Portfolio Table*/

@@ -52,15 +52,15 @@ $(document).ready(function() {
 			},
 
 			password: {
-				required: "Please enter a password",
+				required: "Please enter new password",
 				minlength: "Password must contain at least 5 characters",
-				uppercase: "Must contain uppercase",
-				numbers: "Must have a number",
-				specialChars: "Must have a special char"
+				uppercase: "Password must contain uppercase",
+				numbers: "Password must have a number",
+				specialChars: "Password must have a special char"
 			},
 
 			confirmation: {
-				required: "Please again enter your password",
+				required: "Please enter your password again",
 				minlength: "Password must contain at least 5 characters",
 				equalTo: "Both passwords must match"
 			}
@@ -211,6 +211,44 @@ $(document).ready(function() {
 
 	});
 
+	/******** Update password form validation*******/
+
+	$("#update_password_area form").validate({
+		
+		rules: {
+			
+			password: {
+				required: true,
+				minlength: 5,
+				uppercase: true,
+				numbers: true,
+				specialChars: true
+			},
+
+			confirmation: {
+				required: true,
+				minlength: 5,
+				equalTo: "#update_pwd"
+			}
+		},
+
+		messages: {
+			password: {
+				required: "Please enter new password",
+				minlength: "Password must contain at least 5 characters",
+				uppercase: "Password must contain uppercase",
+				numbers: "Password must have a number",
+				specialChars: "Password must have a special char"
+			},
+
+			confirmation: {
+				required: "Please enter your password again",
+				minlength: "Password must contain at least 5 characters",
+				equalTo: "Both passwords must match"
+			}
+		}
+
+	});
 
 	// When user submits the registration button of index page
 	$('[name="buy_button"]').on('click', function() {

@@ -203,7 +203,7 @@ def register():
         flash("Congrats!")
 
         # Redirect user to home page
-        return redirect(url_for("index"))
+        return redirect("/")
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
@@ -248,7 +248,7 @@ def login():
         flash("Welcome!")
 
         # Redirect user to home page
-        return redirect(url_for("index"))
+        return redirect("/")
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
@@ -565,20 +565,20 @@ def password_reset():
             action_url = "https://finance-stocks.herokuapp.com/req_to_change_password?token=" + token32
 
             # Check if prev token exists
-            query = text("SELECT * FROM password_reset WHERE id = :id")
-            tokenExists = connection.execute(query, id=result[0]["id"]).fetchall()
+            query = text("SELECT * FROM password_reset WHERE email = :email")
+            tokenExists = connection.execute(query, email=result[0]["email"]).fetchall()
 
             # If token exists, update the prev one with the current token
             if tokenExists:
-                query = text("UPDATE password_reset SET token = :token, expiration_time = :expiration_time WHERE id = :id")
-                connection.execute(query, token=token32, expiration_time=expireTime, id=result[0]["id"])
+                query = text("UPDATE password_reset SET token = :token, expiration_time = :expiration_time WHERE email = :email")
+                connection.execute(query, token=token32, expiration_time=expireTime, email=result[0]["email"])
             else:
-                query = text("INSERT INTO password_reset (id, token, expiration_time) VALUES (:id, :token, :expiration_time)")
-                connection.execute(query, id=result[0]["id"], token=token32, expiration_time=expireTime)
+                query = text("INSERT INTO password_reset (email, token, expiration_time) VALUES (:email, :token, :expiration_time)")
+                connection.execute(query, email=result[0]["email"], token=token32, expiration_time=expireTime)
 
             # Send mail
             try:
-                msg = Message("Reset Password", sender="finance50.bd@gmail.com", 
+                msg = Message("Reset Password", sender=os.environ.get("MAIL_ID"), 
                               recipients=[request.form.get("email")])
                 msg.html = render_template("MAIL_for_registered_users.html", name=result[0]["first_name"], 
                                             action_url=action_url)
@@ -590,11 +590,11 @@ def password_reset():
         else:
             
             try:
-                msg = Message("Request For Reset Password", sender="finance50.bd@gmail.com", 
+                msg = Message("Request For Reset Password", sender=os.environ.get("MAIL_ID"), 
                               recipients=[request.form.get("email")])
                 msg.html = render_template("MAIL_for_unregistered_users.html", email_address=request.form.get("email"), 
                                             action_url="https://finance-stocks.herokuapp.com/forgot_password", 
-                                            support_url="mailto:minhajul.kaarim@gmail.com")
+                                            support_url="mailto:"+os.environ.get("MAIL_ID"))
                 mail.send(msg)
                 return render_template("resend.html", email=request.form.get("email"))
 
@@ -640,14 +640,66 @@ def error():
     return render_template("error.html")
 
 @app.route("/req_to_change_password", methods=["GET"])
-def test():
-    token = request.args.get("token")
+def req_to_change_password():
+    """Validate token"""
 
     # Search DB for token
-    query = text("SELECT * FROM users where email = :email LIMIT 1") 
-    result = (connection.execute(query, email=request.form.get("email"))).fetchall()
-    return token
+    query = text("SELECT * FROM password_reset where token = :token") 
+    tokenResult = (connection.execute(query, token=request.args.get("token"))).fetchall()
 
+    if tokenResult:
+        
+        # Current time
+        currentTime = datetime.utcnow()
+        print(currentTime)
+
+        # Token validity
+        if currentTime <= tokenResult[0]["expiration_time"]:
+
+            # Get the email of user who owns this token
+            return render_template("update_password.html", email=tokenResult[0]["email"])
+        
+        else:
+            return sorry("this token has expired.", 400)
+    
+    else:
+        return sorry("the token does not exist.", 400)
+
+@app.route("/update_password", methods=["POST"])
+def update_password():
+    """Update user's password"""
+
+    if request.method == "POST":
+        
+        # Ensure password was submitted
+        if not request.form.get("password"):
+            return sorry("please provide a new password")
+
+        # Ensure password confirmation was submitted
+        elif not request.form.get("confirmation"):
+            return sorry("please confirm your new password")
+
+        # Check both passwords
+        elif request.form.get("password") != request.form.get("confirmation"):
+            return sorry("your both passwords didn't match.", 400)
+
+        # Update password
+        query = text("UPDATE users SET hash = :hash WHERE email = :email RETURNING id, first_name")
+        # connection.execute(query, hash=generate_password_hash(request.form.get('password')), email=request.form.get("email"))
+        result = (connection.execute(query, hash=generate_password_hash(request.form.get('password')), email=request.form.get("email"))).fetchall()
+
+        # Delete token
+        query = text("DELETE FROM password_reset WHERE email = :email")
+        connection.execute(query, email=request.form.get("email"))
+
+        # save id in session
+        session["user_id"] = result[0]["id"]
+        session["fname"] = result[0]["first_name"]
+
+        return redirect("/")
+
+    else:
+        return redirect("/")
 
 def errorhandler(e):
     """Handle error"""
